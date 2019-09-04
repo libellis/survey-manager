@@ -1,3 +1,8 @@
+#[macro_use]
+extern crate domain_derive;
+
+pub mod domain;
+
 #[cfg(test)]
 mod tests {
     #[test]
