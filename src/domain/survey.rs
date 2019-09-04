@@ -1,6 +1,7 @@
 use crate::domain::value_objects::Title;
 use uuid::Uuid;
-use crate::domain::Question;
+use crate::domain::{Question, SurveyEvents};
+use domain_patterns::models::AggregateRoot;
 
 #[derive(Entity)]
 pub struct Survey {
@@ -12,4 +13,8 @@ pub struct Survey {
     date_posted: i64,
     category: String,
     questions: Vec<Question>,
+}
+
+impl AggregateRoot for Survey {
+    type Events = SurveyEvents;
 }
