@@ -1,0 +1,9 @@
+[package]
+name = "survey-creator"
+version = "0.1.0"
+authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
+edition = "2018"
+
+[dependencies]
+domain_patterns = "0.1.5"
+domain_derive = "0.1.5"
