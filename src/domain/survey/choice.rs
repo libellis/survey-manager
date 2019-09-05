@@ -7,12 +7,11 @@ use std::convert::TryFrom;
 
 #[derive(Entity)]
 pub struct Choice {
-    id: Uuid,
-    version: u64,
-    question_id: Uuid,
-    content: Option<Content>,
-    content_type: ContentType,
-    title: Title,
+    pub(super) id: Uuid,
+    pub(super) version: u64,
+    pub(super) content: Option<Content>,
+    pub(super) content_type: ContentType,
+    pub(super) title: Title,
 }
 
 // COMMENTING OUT BECAUSE ONLY AGGREGATE ROOT SHOULD HAVE A CONSTRUCTOR
