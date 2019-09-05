@@ -69,14 +69,22 @@ pub struct ChoiceCreated {
 //    }
 //}
 
+use domain_patterns::models::Entity;
+
 impl From<Choice> for ChoiceCreated {
     fn from(choice: Choice) -> Self {
+        let content = if let Some(c) = choice.content() {
+            Some(c.to_string())
+        } else {
+            None
+        };
+
         ChoiceCreated {
-            id: choice.id(),
+            id: choice.id().to_string(),
             version: choice.version(),
-            content: choice.content(),
-            content_type: choice.content_type(),
-            title: choice.title(),
+            content,
+            content_type: choice.content_type().to_string(),
+            title: choice.title().to_string(),
         }
     }
 }

@@ -14,6 +14,25 @@ pub struct Choice {
     pub(super) title: Title,
 }
 
+// Getters for private fields - consider automating this into Entity macro.
+impl Choice {
+    pub fn content(&self) -> Option<Content> {
+        if let Some(content) = &self.content {
+            Some(content.clone())
+        } else {
+            None
+        }
+    }
+
+    pub fn content_type(&self) -> ContentType {
+        self.content_type.clone()
+    }
+
+    pub fn title(&self) -> Title {
+        self.title.clone()
+    }
+}
+
 // COMMENTING OUT BECAUSE ONLY AGGREGATE ROOT SHOULD HAVE A CONSTRUCTOR
 //impl Choice {
 //    // TODO: Improve error so it's not ambiguous boxed type.
@@ -32,8 +51,21 @@ pub struct Choice {
 
 // Todo: Set this up as a value object once we understand qualifying factors
 // for incoming embedded strings that would allow us to type match.
+#[derive(Clone)]
 pub enum Content {
     Youtube(String),
     Spotify(String),
     Soundcloud(String),
+}
+
+impl std::fmt::Display for Content {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let value = match self {
+            Content::Youtube(value) => value,
+            Content::Spotify(value) => value,
+            Content::Soundcloud(value) => value,
+        };
+
+        write!(f, "{}", value)
+    }
 }

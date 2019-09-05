@@ -14,7 +14,6 @@ pub mod input;
 use crate::domain::value_objects::{Title, QuestionType, ContentType};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
-use crate::domain::survey::{Question, SurveyEvents, Choice};
 use std::error::Error;
 use std::convert::TryFrom;
 use chrono::Utc;
