@@ -18,7 +18,7 @@ use crate::domain::survey::{Question, SurveyEvents, Choice};
 use std::error::Error;
 use std::convert::TryFrom;
 use chrono::Utc;
-use crate::domain::survey::input::{NewSurvey, NewQuestion, NewChoice};
+use crate::domain::survey::input::{NewSurveyReq, NewQuestionReq, NewChoiceReq};
 
 #[derive(Entity)]
 pub struct Survey {
@@ -34,7 +34,7 @@ pub struct Survey {
 
 impl Survey {
     pub fn new(
-        new_survey: NewSurvey,
+        new_survey: NewSurveyReq,
     ) -> Result<Survey, Box<dyn Error>> {
         Ok(Survey {
             id: Uuid::new_v4(),
@@ -48,7 +48,7 @@ impl Survey {
         })
     }
 
-    fn create_questions(new_questions: Vec<NewQuestion>) -> Result<Vec<Question>, Box<dyn Error>> {
+    fn create_questions(new_questions: Vec<NewQuestionReq>) -> Result<Vec<Question>, Box<dyn Error>> {
         let q_results = new_questions
             .into_iter()
             .map(|q| { Self::create_question(q) });
@@ -62,7 +62,7 @@ impl Survey {
         Ok(questions)
     }
 
-    fn create_question(new_question: NewQuestion) -> Result<Question, Box<dyn Error>> {
+    fn create_question(new_question: NewQuestionReq) -> Result<Question, Box<dyn Error>> {
         Ok(Question {
             id: Uuid::new_v4(),
             version: 0,
@@ -72,7 +72,7 @@ impl Survey {
         })
     }
 
-    fn create_choices(new_choices: Vec<NewChoice>) -> Result<Vec<Choice>, Box<dyn Error>> {
+    fn create_choices(new_choices: Vec<NewChoiceReq>) -> Result<Vec<Choice>, Box<dyn Error>> {
         let c_results = new_choices
             .into_iter()
             .map(|c| { Self::create_choice(c) });
@@ -86,7 +86,7 @@ impl Survey {
         Ok(choices)
     }
 
-    fn create_choice(new_choice: NewChoice) -> Result<Choice, Box<dyn Error>> {
+    fn create_choice(new_choice: NewChoiceReq) -> Result<Choice, Box<dyn Error>> {
         Ok(Choice {
             id: Uuid::new_v4(),
             version: 0,

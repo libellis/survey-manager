@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::domain::survey::input::{NewSurvey, NewQuestion, NewChoice};
+use crate::domain::survey::input::{NewSurveyReq, NewQuestionReq, NewChoiceReq};
 use std::convert::Into;
 
 #[derive(Deserialize)]
@@ -25,9 +25,9 @@ pub struct NewChoiceData {
     pub title: String,
 }
 
-impl Into<NewSurvey> for NewSurveyData {
-    fn into(self) -> NewSurvey {
-        let questions: Vec<NewQuestion> = self.questions
+impl Into<NewSurveyReq> for NewSurveyData {
+    fn into(self) -> NewSurveyReq {
+        let questions: Vec<NewQuestionReq> = self.questions
             .into_iter()
             .map(|q| {
                 q.into()
@@ -35,7 +35,7 @@ impl Into<NewSurvey> for NewSurveyData {
 
         // TODO: Change to actually parse author from token once we implement token logic.
         let author = self.token;
-        NewSurvey {
+        NewSurveyReq {
             author,
             title: self.title,
             description: self.description,
@@ -45,15 +45,15 @@ impl Into<NewSurvey> for NewSurveyData {
     }
 }
 
-impl Into<NewQuestion> for NewQuestionData {
-    fn into(self) -> NewQuestion {
-        let choices: Vec<NewChoice> = self.choices
+impl Into<NewQuestionReq> for NewQuestionData {
+    fn into(self) -> NewQuestionReq {
+        let choices: Vec<NewChoiceReq> = self.choices
             .into_iter()
             .map(|c| {
                 c.into()
             }).collect();
 
-        NewQuestion {
+        NewQuestionReq {
             question_type: self.question_type,
             title: self.title,
             choices,
@@ -61,9 +61,9 @@ impl Into<NewQuestion> for NewQuestionData {
     }
 }
 
-impl Into<NewChoice> for NewChoiceData {
-    fn into(self) -> NewChoice {
-        NewChoice {
+impl Into<NewChoiceReq> for NewChoiceData {
+    fn into(self) -> NewChoiceReq {
+        NewChoiceReq {
             content: self.content,
             content_type: self.content_type,
             title: self.title,

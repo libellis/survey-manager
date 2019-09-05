@@ -14,16 +14,16 @@ impl<T: Repository<Survey>> SurveyService<T> {
 
     // Creates a survey by taking in data which is a json string, a token
     // and finally returns a json string as output.
-    pub fn create_survey(&mut self, data: &String, token: &String) -> String {
-        let s: NewSurveyData = serde_json::from_str(data).unwrap();
+    pub fn create_survey(&mut self, data: &String) -> Result<String, Box<dyn Error>> {
+        let s: NewSurveyData = serde_json::from_str(data)?;
 
-        let new_survey = Survey::new(s.into()).unwrap();
+        let new_survey = Survey::new(s.into())?;
 
-        // TODO: With ? the compiler fails because the internal repo Error that is
-        // defined by the implementor does not have an explicit enough lifetime.
-        self.repo.insert(&new_survey).unwrap();
+        let ss = self.repo.insert(&new_survey)?;
 
-        // TODO: Replace with actual json once we build output types.
-        "SurveyOutputJsonHere".to_string()
-}
+        Ok(
+            // TODO: Replace with actual json once we build output types.
+            "SurveyOutputJsonHere".to_string()
+        )
+    }
 }
