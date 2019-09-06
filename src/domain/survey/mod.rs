@@ -26,6 +26,7 @@ pub struct Survey {
     author: String,
     title: Title,
     description: String,
+    // TODO: Change into a nice timestamp.
     created_on: i64,
     category: String,
     questions: Vec<Question>,

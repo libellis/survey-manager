@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::convert::Into;
-use crate::domain::survey::{Choice, Survey};
+use domain_patterns::models::Entity;
+use crate::domain::survey::{Choice, Survey, Question};
 
 #[derive(Serialize)]
 pub struct SurveyCreated {
@@ -33,46 +34,45 @@ pub struct ChoiceCreated {
     pub title: String,
 }
 
-//impl Into<SurveyCreated> for Survey {
-//    fn into(self) -> SurveyCreated {
-//        let questions: Vec<NewQuestion> = self.questions
-//            .into_iter()
-//            .map(|q| {
-//                q.into()
-//            }).collect();
-//
-//        // TODO: Change to actually parse author from token once we implement token logic.
-//        let author = self.token;
-//        NewSurvey {
-//            author,
-//            title: self.title,
-//            description: self.description,
-//            category: self.category,
-//            questions,
-//        }
-//    }
-//}
-//
-//impl Into<NewQuestion> for NewQuestionData {
-//    fn into(self) -> NewQuestion {
-//        let choices: Vec<NewChoice> = self.choices
-//            .into_iter()
-//            .map(|c| {
-//                c.into()
-//            }).collect();
-//
-//        NewQuestion {
-//            question_type: self.question_type,
-//            title: self.title,
-//            choices,
-//        }
-//    }
-//}
+impl From<Survey> for SurveyCreated {
+    fn from(s: Survey) -> Self {
+        let questions: Vec<QuestionCreated> = s.questions()
+            .into_iter()
+            .map(|q| QuestionCreated::from(q))
+            .collect();
+        
+        SurveyCreated {
+            id: s.id().to_string(),
+            version: s.version(),
+            author: s.author().clone(),
+            title: s.title().to_string(),
+            description: s.description().to_string(),
+            created_on: s.created_on().clone(),
+            category: s.category().clone(),
+            questions: vec![]
+        }
+    }
+}
 
-use domain_patterns::models::Entity;
+impl From<&Question> for QuestionCreated {
+    fn from(q: &Question) -> Self {
+        let choices = q.choices()
+            .into_iter()
+            .map(|c| ChoiceCreated::from(c))
+            .collect();
 
-impl From<Choice> for ChoiceCreated {
-    fn from(choice: Choice) -> Self {
+        QuestionCreated {
+            id: q.id().to_string(),
+            version: q.version(),
+            question_type: q.question_type().to_string(),
+            title: q.title().to_string(),
+            choices,
+        }
+    }
+}
+
+impl From<&Choice> for ChoiceCreated {
+    fn from(choice: &Choice) -> Self {
         let content = if let Some(c) = choice.content() {
             Some(c.to_string())
         } else {
@@ -88,3 +88,5 @@ impl From<Choice> for ChoiceCreated {
         }
     }
 }
+
+

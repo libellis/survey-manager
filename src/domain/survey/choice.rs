@@ -14,28 +14,6 @@ pub struct Choice {
     pub(super) title: Title,
 }
 
-// Getters for private fields - consider automating this into Entity macro.
-impl Choice {
-    pub fn content(&self) -> Option<Content> {
-        if let Some(content) = &self.content {
-            Some(content.clone())
-        } else {
-            None
-        }
-    }
-
-    pub fn content_type(&self) -> ContentType {
-        self.content_type.clone()
-    }
-
-    pub fn title(&self) -> Title {
-        self.title.clone()
-    }
-}
-
-// COMMENTING OUT BECAUSE ONLY AGGREGATE ROOT SHOULD HAVE A CONSTRUCTOR
-//impl Choice {
-//    // TODO: Improve error so it's not ambiguous boxed type.
 //    // TODO: Add ability to pass content in once we have value object setup.
 //    fn new(question_id: Uuid, content_type: String, title: String) -> Result<Choice, Box<dyn Error>> {
 //        Ok(Choice {

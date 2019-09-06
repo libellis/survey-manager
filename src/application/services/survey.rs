@@ -3,6 +3,7 @@ use crate::domain::survey::Survey;
 use crate::application::ports::inputs::NewSurveyData;
 use std::error::Error;
 use std::convert::Into;
+use crate::application::ports::outputs::survey_data::SurveyCreated;
 
 pub struct SurveyService<T> where
     T: Repository<Survey>
@@ -19,11 +20,12 @@ impl<T: Repository<Survey>> SurveyService<T> {
 
         let new_survey = Survey::new(s.into())?;
 
-        let ss = self.repo.insert(&new_survey)?;
+        self.repo.insert(&new_survey)?;
+
+        let response: SurveyCreated = new_survey.into();
 
         Ok(
-            // TODO: Replace with actual json once we build output types.
-            "SurveyOutputJsonHere".to_string()
+            serde_json::to_string(&response)?
         )
     }
 }
