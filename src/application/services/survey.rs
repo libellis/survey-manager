@@ -3,7 +3,7 @@ use crate::domain::survey::Survey;
 use crate::application::ports::inputs::NewSurveyData;
 use std::error::Error;
 use std::convert::Into;
-use crate::application::ports::outputs::survey_data::SurveyCreated;
+use crate::application::ports::outputs::survey_data::SurveyOut;
 
 pub struct SurveyService<T> where
     T: Repository<Survey>
@@ -22,7 +22,7 @@ impl<T: Repository<Survey>> SurveyService<T> {
 
         self.repo.insert(&new_survey)?;
 
-        let response: SurveyCreated = new_survey.into();
+        let response: SurveyOut = new_survey.into();
 
         Ok(
             serde_json::to_string(&response)?

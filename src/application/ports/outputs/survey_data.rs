@@ -1,10 +1,10 @@
 use serde::Serialize;
-use std::convert::Into;
+use std::convert::From;
 use domain_patterns::models::Entity;
 use crate::domain::survey::{Choice, Survey, Question};
 
 #[derive(Serialize)]
-pub struct SurveyCreated {
+pub struct SurveyOut {
     pub id: String,
     pub version: u64,
     pub author: String,
@@ -13,20 +13,20 @@ pub struct SurveyCreated {
     // TODO: Change into nice timestamp.
     pub created_on: i64,
     pub category: String,
-    pub questions: Vec<QuestionCreated>,
+    pub questions: Vec<QuestionOut>,
 }
 
 #[derive(Serialize)]
-pub struct QuestionCreated {
+pub struct QuestionOut {
     pub id: String,
     pub version: u64,
     pub question_type: String,
     pub title: String,
-    pub choices: Vec<ChoiceCreated>
+    pub choices: Vec<ChoiceOut>
 }
 
 #[derive(Serialize)]
-pub struct ChoiceCreated {
+pub struct ChoiceOut {
     pub id: String,
     pub version: u64,
     pub content: Option<String>,
@@ -34,14 +34,14 @@ pub struct ChoiceCreated {
     pub title: String,
 }
 
-impl From<Survey> for SurveyCreated {
+impl From<Survey> for SurveyOut {
     fn from(s: Survey) -> Self {
-        let questions: Vec<QuestionCreated> = s.questions()
+        let questions: Vec<QuestionOut> = s.questions()
             .into_iter()
-            .map(|q| QuestionCreated::from(q))
+            .map(|q| QuestionOut::from(q))
             .collect();
         
-        SurveyCreated {
+        SurveyOut {
             id: s.id().to_string(),
             version: s.version(),
             author: s.author().clone(),
@@ -49,19 +49,19 @@ impl From<Survey> for SurveyCreated {
             description: s.description().to_string(),
             created_on: s.created_on().clone(),
             category: s.category().clone(),
-            questions: vec![]
+            questions,
         }
     }
 }
 
-impl From<&Question> for QuestionCreated {
+impl From<&Question> for QuestionOut {
     fn from(q: &Question) -> Self {
         let choices = q.choices()
             .into_iter()
-            .map(|c| ChoiceCreated::from(c))
+            .map(|c| ChoiceOut::from(c))
             .collect();
 
-        QuestionCreated {
+        QuestionOut {
             id: q.id().to_string(),
             version: q.version(),
             question_type: q.question_type().to_string(),
@@ -71,7 +71,7 @@ impl From<&Question> for QuestionCreated {
     }
 }
 
-impl From<&Choice> for ChoiceCreated {
+impl From<&Choice> for ChoiceOut {
     fn from(choice: &Choice) -> Self {
         let content = if let Some(c) = choice.content() {
             Some(c.to_string())
@@ -79,7 +79,7 @@ impl From<&Choice> for ChoiceCreated {
             None
         };
 
-        ChoiceCreated {
+        ChoiceOut {
             id: choice.id().to_string(),
             version: choice.version(),
             content,

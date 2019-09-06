@@ -1,9 +1,6 @@
-use domain_patterns::models::Entity;
 use uuid::Uuid;
 use crate::domain::value_objects::title::Title;
 use crate::domain::value_objects::content_type::ContentType;
-use std::error::Error;
-use std::convert::TryFrom;
 
 #[derive(Entity)]
 pub struct Choice {
