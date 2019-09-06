@@ -1,18 +1,18 @@
-pub struct NewSurveyOut {
+pub struct NewSurveyIn {
     pub author: String,
     pub title: String,
     pub description: String,
     pub category: String,
-    pub questions: Vec<NewQuestionOut>,
+    pub questions: Vec<NewQuestionIn>,
 }
 
-pub struct NewQuestionOut {
+pub struct NewQuestionIn {
     pub question_type: String,
     pub title: String,
-    pub choices: Vec<NewChoiceOut>
+    pub choices: Vec<NewChoiceIn>
 }
 
-pub struct NewChoiceOut {
+pub struct NewChoiceIn {
     pub content: Option<String>,
     pub content_type: String,
     pub title: String,
