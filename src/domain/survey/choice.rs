@@ -11,19 +11,6 @@ pub struct Choice {
     pub(super) title: Title,
 }
 
-//    // TODO: Add ability to pass content in once we have value object setup.
-//    fn new(question_id: Uuid, content_type: String, title: String) -> Result<Choice, Box<dyn Error>> {
-//        Ok(Choice {
-//            id: Uuid::new_v4(),
-//            version: 0,
-//            question_id,
-//            content: None,
-//            content_type: ContentType::try_from(content_type)?,
-//            title: Title::try_from(title)?,
-//        })
-//    }
-//}
-
 // Todo: Set this up as a value object once we understand qualifying factors
 // for incoming embedded strings that would allow us to type match.
 #[derive(Clone)]
