@@ -1,14 +1,9 @@
 use domain_patterns::collections::Repository;
 use crate::domain::survey::Survey;
-use crate::application::ports::inputs::NewSurveyData;
+use crate::application::inputs::NewSurveyData;
 use std::error::Error;
 use std::convert::Into;
-use crate::application::ports::outputs::survey_data::SurveyOut;
-
-// TODO: Change service to take and receive structs.  It should be up to the REST controller
-// to translate incoming packets into structs, not this layer.
-// also remove ports folder - ports are things like HTTP, and adapters are things like REST controller.
-// Those are just input and output types for services, not related to ports.
+use crate::application::outputs::survey_data::SurveyOut;
 
 pub struct SurveyService<T> where
     T: Repository<Survey>
@@ -20,17 +15,13 @@ impl<T: Repository<Survey>> SurveyService<T> {
 
     // Creates a survey by taking in data which is a json string, a token
     // and finally returns a json string as output.
-    pub fn create_survey(&mut self, data: &String) -> Result<String, Box<dyn Error>> {
-        let s: NewSurveyData = serde_json::from_str(data)?;
-
-        let new_survey = Survey::new(s.into())?;
+    pub fn create_survey(&mut self, survey_data: NewSurveyData) -> Result<SurveyOut, Box<dyn Error>> {
+        let new_survey = Survey::new(survey_data.into())?;
 
         self.repo.insert(&new_survey)?;
 
-        let response: SurveyOut = new_survey.into();
-
         Ok(
-            serde_json::to_string(&response)?
+            new_survey.into()
         )
     }
 }
