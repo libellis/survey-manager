@@ -5,6 +5,11 @@ use std::error::Error;
 use std::convert::Into;
 use crate::application::ports::outputs::survey_data::SurveyOut;
 
+// TODO: Change service to take and receive structs.  It should be up to the REST controller
+// to translate incoming packets into structs, not this layer.
+// also remove ports folder - ports are things like HTTP, and adapters are things like REST controller.
+// Those are just input and output types for services, not related to ports.
+
 pub struct SurveyService<T> where
     T: Repository<Survey>
 {
