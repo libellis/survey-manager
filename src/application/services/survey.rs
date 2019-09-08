@@ -14,6 +14,16 @@ pub struct SurveyService<T> where
     repo: T,
 }
 
+impl<T> SurveyService<T> where
+    T: Repository<Survey>
+{
+    fn new(repo: T) -> SurveyService<T> {
+        SurveyService {
+            repo,
+        }
+    }
+}
+
 impl<T: Repository<Survey>> SurveyService<T> {
     pub fn get_survey(&mut self, key: &String) -> Result<SurveyOut, Box<dyn Error>> {
         Ok(self.repo.get(key)?.ok_or(NotPresent)?.into())
