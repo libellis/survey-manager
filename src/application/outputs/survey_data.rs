@@ -44,7 +44,7 @@ impl From<Survey> for SurveyOut {
         SurveyOut {
             id: s.id().to_string(),
             version: s.version(),
-            author: s.author().clone(),
+            author: s.author().to_string(),
             title: s.title().to_string(),
             description: s.description().to_string(),
             created_on: s.created_on().clone(),

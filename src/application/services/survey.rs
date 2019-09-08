@@ -17,7 +17,7 @@ pub struct SurveyService<T> where
 impl<T> SurveyService<T> where
     T: Repository<Survey>
 {
-    fn new(repo: T) -> SurveyService<T> {
+    pub fn new(repo: T) -> SurveyService<T> {
         SurveyService {
             repo,
         }
@@ -43,7 +43,7 @@ impl<T: Repository<Survey>> SurveyService<T> {
         let mut survey = self.repo.get(&command.id)?.ok_or(NotPresent)?;
         let requesting_author = decode_payload(&command.token).username;
 
-        if !survey.belongs_to(requesting_author) {
+        if !survey.belongs_to(&requesting_author) {
             // Return useful in-house error here for translation to Not Authorized
         }
 

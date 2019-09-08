@@ -11,20 +11,20 @@ pub use events::*;
 /// constructor.
 pub mod input;
 
-use crate::domain::value_objects::{Title, QuestionType, ContentType};
+use crate::domain::value_objects::{Title, QuestionType, ContentType, Author};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
 use std::error::Error;
 use std::convert::TryFrom;
 use chrono::Utc;
-use crate::domain::survey::input::{NewSurveyIn, NewQuestionIn, NewChoiceIn, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
+use crate::domain::survey::input::{NewSurveyData, NewQuestionData, NewChoiceData, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
 use std::env::VarError::NotPresent;
 
 #[derive(Entity)]
 pub struct Survey {
     id: Uuid,
     version: u64,
-    author: String,
+    author: Author,
     title: Title,
     description: String,
     // TODO: Change into a nice timestamp.
@@ -35,12 +35,12 @@ pub struct Survey {
 
 impl Survey {
     pub fn new(
-        new_survey: NewSurveyIn,
+        new_survey: NewSurveyData,
     ) -> Result<Survey, Box<dyn Error>> {
         Ok(Survey {
             id: Uuid::new_v4(),
             version: 0,
-            author: new_survey.author,
+            author: Author::try_from(new_survey.author)?,
             title: Title::try_from(new_survey.title)?,
             description: new_survey.description,
             created_on: Utc::now().timestamp(),
@@ -49,7 +49,7 @@ impl Survey {
         })
     }
 
-    fn create_questions(new_questions: Vec<NewQuestionIn>) -> Result<Vec<Question>, Box<dyn Error>> {
+    fn create_questions(new_questions: Vec<NewQuestionData>) -> Result<Vec<Question>, Box<dyn Error>> {
         let q_results = new_questions
             .into_iter()
             .map(|q| { Self::create_question(q) });
@@ -63,7 +63,7 @@ impl Survey {
         Ok(questions)
     }
 
-    fn create_question(new_question: NewQuestionIn) -> Result<Question, Box<dyn Error>> {
+    fn create_question(new_question: NewQuestionData) -> Result<Question, Box<dyn Error>> {
         Ok(Question {
             id: Uuid::new_v4(),
             version: 0,
@@ -73,7 +73,7 @@ impl Survey {
         })
     }
 
-    fn create_choices(new_choices: Vec<NewChoiceIn>) -> Result<Vec<Choice>, Box<dyn Error>> {
+    fn create_choices(new_choices: Vec<NewChoiceData>) -> Result<Vec<Choice>, Box<dyn Error>> {
         let c_results = new_choices
             .into_iter()
             .map(|c| { Self::create_choice(c) });
@@ -87,7 +87,7 @@ impl Survey {
         Ok(choices)
     }
 
-    fn create_choice(new_choice: NewChoiceIn) -> Result<Choice, Box<dyn Error>> {
+    fn create_choice(new_choice: NewChoiceData) -> Result<Choice, Box<dyn Error>> {
         Ok(Choice {
             id: Uuid::new_v4(),
             version: 0,
@@ -98,8 +98,8 @@ impl Survey {
         })
     }
 
-    pub fn belongs_to(&self, author: String) -> bool {
-        self.author == author
+    pub fn belongs_to(&self, author: &String) -> bool {
+        &self.author.to_string() == author
     }
 
     pub fn try_update(&mut self, changeset: SurveyChangeset) -> Result<(), Box<dyn Error>> {
