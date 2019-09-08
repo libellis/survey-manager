@@ -48,7 +48,7 @@ impl From<Survey> for SurveyOut {
             title: s.title().to_string(),
             description: s.description().to_string(),
             created_on: s.created_on().clone(),
-            category: s.category().clone(),
+            category: s.category().to_string(),
             questions,
         }
     }

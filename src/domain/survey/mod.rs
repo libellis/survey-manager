@@ -11,7 +11,7 @@ pub use events::*;
 /// constructor.
 pub mod input;
 
-use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description};
+use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
 use std::error::Error;
@@ -29,7 +29,7 @@ pub struct Survey {
     description: Description,
     // TODO: Change into a nice timestamp.
     created_on: i64,
-    category: String,
+    category: Category,
     questions: Vec<Question>,
 }
 
@@ -44,7 +44,7 @@ impl Survey {
             title: Title::try_from(new_survey.title)?,
             description: Description::try_from(new_survey.description)?,
             created_on: Utc::now().timestamp(),
-            category: new_survey.category,
+            category: Category::try_from(new_survey.category)?,
             questions: Self::create_questions(new_survey.questions)?
         })
     }
@@ -128,7 +128,7 @@ impl Survey {
     }
 
     pub fn change_category(&mut self, new_category: String) -> Result<(), Box<dyn Error>> {
-        self.category = new_category;
+        self.category = Category::try_from(new_category)?;
         self.version = self.next_version();
         // TODO: Emit a ChangedSurveyCategory event here.
         Ok(())

@@ -4,6 +4,9 @@ pub use title::*;
 pub mod author;
 pub use author::*;
 
+pub mod category;
+pub use category::*;
+
 pub mod description;
 pub use description::*;
 
