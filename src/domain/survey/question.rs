@@ -6,6 +6,7 @@ use crate::domain::survey::Choice;
 pub struct Question {
     pub(super) id: Uuid,
     pub(super) version: u64,
+    // TODO: Change to just type, weird to type question.question_type.  doesn't need to match db fields.
     pub(super) question_type: QuestionType,
     pub(super) title: Title,
     pub(super) choices: Vec<Choice>

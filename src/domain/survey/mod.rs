@@ -13,11 +13,12 @@ pub mod input;
 
 use crate::domain::value_objects::{Title, QuestionType, ContentType};
 use uuid::Uuid;
-use domain_patterns::models::{AggregateRoot};
+use domain_patterns::models::{Entity, AggregateRoot};
 use std::error::Error;
 use std::convert::TryFrom;
 use chrono::Utc;
-use crate::domain::survey::input::{NewSurveyIn, NewQuestionIn, NewChoiceIn};
+use crate::domain::survey::input::{NewSurveyIn, NewQuestionIn, NewChoiceIn, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
+use std::env::VarError::NotPresent;
 
 #[derive(Entity)]
 pub struct Survey {
@@ -95,6 +96,179 @@ impl Survey {
             content_type: ContentType::try_from(new_choice.content_type)?,
             title: Title::try_from(new_choice.title)?,
         })
+    }
+
+    pub fn belongs_to(&self, author: String) -> bool {
+        self.author == author
+    }
+
+    pub fn try_update(&mut self, changeset: SurveyChangeset) -> Result<(), Box<dyn Error>> {
+        if let Some(new_title) = changeset.title {
+            self.change_title(new_title)?;
+        }
+        if let Some(new_category) = changeset.category {
+            self.change_category(new_category)?;
+        }
+        if let Some(new_desc) = changeset.description {
+            self.change_description(new_desc)?;
+        }
+        if let Some(q_changesets) = changeset.questions {
+            self.try_update_questions(q_changesets)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn change_title(&mut self, new_title: String) -> Result<(), Box<dyn Error>> {
+        let new_title = Title::try_from(new_title)?;
+        self.title = new_title;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedSurveyTitle event here.
+        Ok(())
+    }
+
+    pub fn change_category(&mut self, new_category: String) -> Result<(), Box<dyn Error>> {
+        self.category = new_category;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedSurveyCategory event here.
+        Ok(())
+    }
+
+    pub fn change_description(&mut self, new_description: String) -> Result<(), Box<dyn Error>> {
+        self.description = new_description;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedSurveyDescription event here.
+        Ok(())
+    }
+
+    pub fn try_update_questions(&mut self, changesets: Vec<QuestionChangeset>) -> Result<(), Box<dyn Error>> {
+        for changeset in changesets {
+            self.try_update_question(changeset)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn try_update_question(&mut self, changeset: QuestionChangeset) -> Result<(), Box<dyn Error>> {
+        let q_id = changeset.id;
+
+        if let Some(new_title) = changeset.title {
+            self.change_question_title(&q_id, new_title)?;
+        }
+        if let Some(new_type) = changeset.question_type {
+            self.change_question_type(&q_id, new_type)?;
+        }
+        if let Some(changesets) = changeset.choices {
+            self.try_update_choices(changesets)?;
+        }
+
+        Ok(())
+    }
+
+    fn find_question(&mut self, q_id: &String) -> Result<&mut Question, Box<dyn Error>> {
+        // does the question even exist?  Pass back error if not found.
+        Ok(
+            self.questions
+            .iter_mut()
+            .find(|q| &q.id() == q_id).ok_or(NotPresent)?
+        )
+    }
+
+    fn find_choice(&mut self, c_id: &String) -> Result<&mut Choice, Box<dyn Error>> {
+        // does the choice even exist?  Pass back error if not found.
+        Ok(
+            self.choices_mut()
+                .into_iter()
+                .find(|c| &c.id() == c_id).ok_or(NotPresent)?
+        )
+    }
+
+    fn choices_mut(&mut self) -> Vec<&mut Choice> {
+        self.questions
+            .iter_mut()
+            .flat_map(|q| {
+                q.choices.iter_mut()
+            }).collect()
+    }
+
+    pub fn change_question_title(&mut self, q_id: &String, new_title: String) -> Result<(), Box<dyn Error>> {
+        let question = self.find_question(q_id)?;
+
+        let new_title = Title::try_from(new_title)?;
+        question.title = new_title;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedQuestionTitle event here.
+        Ok(())
+    }
+
+    pub fn change_question_type(&mut self, q_id: &String, new_type: String) -> Result<(), Box<dyn Error>> {
+        let question = self.find_question(q_id)?;
+
+        let new_type = QuestionType::try_from(new_type)?;
+        question.question_type = new_type;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedQuestionType event here.
+        Ok(())
+    }
+
+    pub fn try_update_choices(&mut self, changesets: Vec<ChoiceChangeset>) -> Result<(), Box<dyn Error>> {
+        for changeset in changesets {
+            self.try_update_choice(changeset)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn try_update_choice(&mut self, changeset: ChoiceChangeset) -> Result<(), Box<dyn Error>> {
+        let c_id = changeset.id;
+
+        if let Some(new_title) = changeset.title {
+            self.change_choice_title(&c_id, new_title)?;
+        }
+        if let Some(new_type) = changeset.content_type {
+            self.change_choice_content_type(&c_id, new_type)?;
+        }
+        if let Some(new_content) = changeset.content {
+            self.change_choice_content(&c_id, new_content)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn change_choice_title(&mut self, c_id: &String, new_title: String) -> Result<(), Box<dyn Error>> {
+        let choice = self.find_choice(c_id)?;
+
+        let new_title = Title::try_from(new_title)?;
+        choice.title = new_title;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedChoiceTitle event here.
+        Ok(())
+    }
+
+    pub fn change_choice_content_type(&mut self, c_id: &String, new_type: String) -> Result<(), Box<dyn Error>> {
+        let choice = self.find_choice(c_id)?;
+
+        let new_type = ContentType::try_from(new_type)?;
+        choice.content_type = new_type;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedChoiceContentType event here.
+        Ok(())
+    }
+
+    pub fn change_choice_content(&mut self, c_id: &String, new_content: Option<String>) -> Result<(), Box<dyn Error>> {
+        let choice = self.find_choice(c_id)?;
+
+        let content = if let Some(c) = new_content {
+            // TODO: Obviously replace this once we actually have this figured out.
+            Some(Content::Youtube(c))
+        } else {
+            None
+        };
+
+        choice.content = content;
+        self.version = self.next_version();
+        // TODO: Emit a ChangedChoiceContent event here.
+        Ok(())
     }
 }
 
