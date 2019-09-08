@@ -11,7 +11,7 @@ pub use events::*;
 /// constructor.
 pub mod input;
 
-use crate::domain::value_objects::{Title, QuestionType, ContentType, Author};
+use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
 use std::error::Error;
@@ -26,7 +26,7 @@ pub struct Survey {
     version: u64,
     author: Author,
     title: Title,
-    description: String,
+    description: Description,
     // TODO: Change into a nice timestamp.
     created_on: i64,
     category: String,
@@ -42,7 +42,7 @@ impl Survey {
             version: 0,
             author: Author::try_from(new_survey.author)?,
             title: Title::try_from(new_survey.title)?,
-            description: new_survey.description,
+            description: Description::try_from(new_survey.description)?,
             created_on: Utc::now().timestamp(),
             category: new_survey.category,
             questions: Self::create_questions(new_survey.questions)?
@@ -135,7 +135,7 @@ impl Survey {
     }
 
     pub fn change_description(&mut self, new_description: String) -> Result<(), Box<dyn Error>> {
-        self.description = new_description;
+        self.description = Description::try_from(new_description)?;
         self.version = self.next_version();
         // TODO: Emit a ChangedSurveyDescription event here.
         Ok(())
