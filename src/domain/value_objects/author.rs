@@ -1,4 +1,6 @@
 use domain_patterns::models::ValueObject;
+use crate::domain::value_objects::ValidationError;
+use crate::errors::{Error, Result};
 
 #[derive(ValueSetup)]
 pub struct Author {
@@ -6,8 +8,22 @@ pub struct Author {
 }
 
 impl ValueObject<String> for Author {
-    fn validate(value: &String) -> bool {
-        value.len() < 32
+    type ValueError = Error;
+
+    fn validate(value: &String) -> Result<()> {
+        let min = 3;
+        let max = 32;
+        let len = value.len();
+
+        if len < min || len > max {
+            return Err(
+                ValidationError::AuthorsValidationError {
+                    msg: format!("length must be between {} and {}", min, max),
+                }.into()
+            );
+        }
+
+        Ok(())
     }
 
     fn value(&self) -> String {

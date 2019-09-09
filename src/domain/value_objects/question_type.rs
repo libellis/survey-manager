@@ -1,5 +1,8 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
+use crate::errors::{Error, Result};
+use crate::errors::ErrorKind::ValidationError;
+use crate::domain::value_objects::ValidationError::QuestionTypeValidationError;
 
 #[derive(Clone, PartialEq)]
 pub enum QuestionType {
@@ -14,45 +17,31 @@ impl std::fmt::Display for QuestionType {
 }
 
 impl TryFrom<String> for QuestionType {
-    type Error = QuestionTypeValidationError;
+    type Error = Error;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if Self::validate(&value) {
-            // we've already validated so we can assume we
-            // have no edge cases and can set wild to anything.
-            let content_type = match value.as_ref() {
-                "ranked" => QuestionType::Ranked,
-                "multiple_choice" => QuestionType::MultipleChoice,
-                _ => QuestionType::MultipleChoice,
-            };
-            return Ok(content_type);
-        }
+    fn try_from(value: String) -> Result<Self> {
+        Self::validate(&value)?;
 
-        Err(QuestionTypeValidationError)
-    }
-}
+        let content_type = match value.as_ref() {
+            "ranked" => QuestionType::Ranked,
+            "multiple_choice" => QuestionType::MultipleChoice,
+            _ => QuestionType::MultipleChoice,
+        };
 
-#[derive(Debug)]
-pub struct QuestionTypeValidationError;
-
-impl std::fmt::Display for QuestionTypeValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "QuestionType failed to validate.")
-    }
-}
-
-impl std::error::Error for QuestionTypeValidationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
+        Ok(content_type)
     }
 }
 
 impl ValueObject<String> for QuestionType {
-    fn validate(value: &String) -> bool {
+    type ValueError = Error;
+
+    fn validate(value: &String) -> Result<()> {
         match value.as_ref() {
-            "multiple_choice" => true,
-            "ranked" => true,
-            _ => false,
+            "multiple_choice" => Ok(()),
+            "ranked" => Ok(()),
+            _ => Err(
+                QuestionTypeValidationError.into()
+            ),
         }
     }
 

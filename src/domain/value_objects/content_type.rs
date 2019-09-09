@@ -1,5 +1,8 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
+use crate::domain::value_objects::ValidationError::ContentTypeValidationError;
+use crate::domain::value_objects::ValidationError;
+use crate::errors::{Error, Result};
 
 #[derive(Clone, PartialEq)]
 pub enum ContentType {
@@ -16,49 +19,37 @@ impl std::fmt::Display for ContentType {
 }
 
 impl TryFrom<String> for ContentType {
-    type Error = ContentTypeValidationError;
+    type Error = Error;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if Self::validate(&value) {
-            // we've already validated so we can assume we
-            // have no edge cases and can set wild to anything.
-            let content_type = match value.as_ref() {
-                "text" => ContentType::Text,
-                "youtube" => ContentType::Youtube,
-                "spotify" => ContentType::Spotify,
-                "soundcloud" => ContentType::Soundcloud,
-                _ => ContentType::Text,
-            };
-            return Ok(content_type);
-        }
+    fn try_from(value: String) -> Result<Self> {
+        Self::validate(&value)?;
 
-        Err(ContentTypeValidationError)
-    }
-}
+        let content_type = match value.as_ref() {
+            "text" => ContentType::Text,
+            "youtube" => ContentType::Youtube,
+            "spotify" => ContentType::Spotify,
+            "soundcloud" => ContentType::Soundcloud,
+            _ => ContentType::Text,
+        };
 
-#[derive(Debug)]
-pub struct ContentTypeValidationError;
-
-impl std::fmt::Display for ContentTypeValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "ContentType failed to validate.")
-    }
-}
-
-impl std::error::Error for ContentTypeValidationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
+        Ok(content_type)
     }
 }
 
 impl ValueObject<String> for ContentType {
-    fn validate(value: &String) -> bool {
+    type ValueError = Error;
+
+    fn validate(value: &String) -> Result<()> {
         match value.as_ref() {
-            "text" => true,
-            "youtube" => true,
-            "spotify" => true,
-            "soundcloud" => true,
-            _ => false,
+            "text" => Ok(()),
+            "youtube" => Ok(()),
+            "spotify" => Ok(()),
+            "soundcloud" => Ok(()),
+            _ => Err(
+                ValidationError::ContentTypeValidationError {
+                    msg: "That content type is not supported by our system yet.".to_string()
+                }.into()
+            ),
         }
     }
 

@@ -1,5 +1,7 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
+use crate::domain::value_objects::ValidationError;
+use crate::errors::{Error, Result};
 
 #[derive(Clone, PartialEq)]
 pub enum Category {
@@ -16,49 +18,37 @@ impl std::fmt::Display for Category {
 }
 
 impl TryFrom<String> for Category {
-    type Error = CategoryValidationError;
+    type Error = Error;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if Self::validate(&value) {
-            // we've already validated so we can assume we
-            // have no edge cases and can set wild to anything.
-            let content_type = match value.as_ref() {
-                "music" => Category::Music,
-                "funny" => Category::Funny,
-                "technology" => Category::Technology,
-                "memes" => Category::Memes,
-                _ => Category::Music,
-            };
-            return Ok(content_type);
-        }
+    fn try_from(value: String) -> Result<Self> {
+        Self::validate(&value)?;
 
-        Err(CategoryValidationError)
-    }
-}
+        let content_type = match value.as_ref() {
+            "music" => Category::Music,
+            "funny" => Category::Funny,
+            "technology" => Category::Technology,
+            "memes" => Category::Memes,
+            _ => Category::Music,
+        };
 
-#[derive(Debug)]
-pub struct CategoryValidationError;
-
-impl std::fmt::Display for CategoryValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Category failed to validate.")
-    }
-}
-
-impl std::error::Error for CategoryValidationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
+        Ok(content_type)
     }
 }
 
 impl ValueObject<String> for Category {
-    fn validate(value: &String) -> bool {
+    type ValueError = Error;
+
+    fn validate(value: &String) -> Result<()> {
         match value.as_ref() {
-            "music" => true,
-            "technology" => true,
-            "memes" => true,
-            "funny" => true,
-            _ => false,
+            "music" => Ok(()),
+            "technology" => Ok(()),
+            "memes" => Ok(()),
+            "funny" => Ok(()),
+            _ => Err(
+                ValidationError::CategoryValidationError {
+                    msg: "This is not a valid category.".to_string()
+                }.into()
+            ),
         }
     }
 

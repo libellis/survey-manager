@@ -1,3 +1,6 @@
+pub mod errors;
+pub use errors::*;
+
 pub mod title;
 pub use title::*;
 

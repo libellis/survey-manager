@@ -14,11 +14,13 @@ pub mod input;
 use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
-use std::error::Error;
 use std::convert::TryFrom;
 use chrono::Utc;
 use crate::domain::survey::input::{NewSurveyData, NewQuestionData, NewChoiceData, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
 use std::env::VarError::NotPresent;
+use crate::errors::Result;
+use crate::errors::Error;
+use crate::errors::ErrorKind::ResourceNotFound;
 
 #[derive(Entity)]
 pub struct Survey {
@@ -36,7 +38,7 @@ pub struct Survey {
 impl Survey {
     pub fn new(
         new_survey: NewSurveyData,
-    ) -> Result<Survey, Box<dyn Error>> {
+    ) -> Result<Survey> {
         Ok(Survey {
             id: Uuid::new_v4(),
             version: 0,
@@ -49,7 +51,7 @@ impl Survey {
         })
     }
 
-    fn create_questions(new_questions: Vec<NewQuestionData>) -> Result<Vec<Question>, Box<dyn Error>> {
+    fn create_questions(new_questions: Vec<NewQuestionData>) -> Result<Vec<Question>> {
         let q_results = new_questions
             .into_iter()
             .map(|q| { Self::create_question(q) });
@@ -63,7 +65,7 @@ impl Survey {
         Ok(questions)
     }
 
-    fn create_question(new_question: NewQuestionData) -> Result<Question, Box<dyn Error>> {
+    fn create_question(new_question: NewQuestionData) -> Result<Question> {
         Ok(Question {
             id: Uuid::new_v4(),
             version: 0,
@@ -73,7 +75,7 @@ impl Survey {
         })
     }
 
-    fn create_choices(new_choices: Vec<NewChoiceData>) -> Result<Vec<Choice>, Box<dyn Error>> {
+    fn create_choices(new_choices: Vec<NewChoiceData>) -> Result<Vec<Choice>> {
         let c_results = new_choices
             .into_iter()
             .map(|c| { Self::create_choice(c) });
@@ -87,7 +89,7 @@ impl Survey {
         Ok(choices)
     }
 
-    fn create_choice(new_choice: NewChoiceData) -> Result<Choice, Box<dyn Error>> {
+    fn create_choice(new_choice: NewChoiceData) -> Result<Choice> {
         Ok(Choice {
             id: Uuid::new_v4(),
             version: 0,
@@ -102,7 +104,7 @@ impl Survey {
         &self.author.to_string() == author
     }
 
-    pub fn try_update(&mut self, changeset: SurveyChangeset) -> Result<(), Box<dyn Error>> {
+    pub fn try_update(&mut self, changeset: SurveyChangeset) -> Result<()> {
         if let Some(new_title) = changeset.title {
             self.change_title(new_title)?;
         }
@@ -119,7 +121,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_title(&mut self, new_title: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_title(&mut self, new_title: String) -> Result<()> {
         let new_title = Title::try_from(new_title)?;
         self.title = new_title;
         self.version = self.next_version();
@@ -127,21 +129,21 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_category(&mut self, new_category: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_category(&mut self, new_category: String) -> Result<()> {
         self.category = Category::try_from(new_category)?;
         self.version = self.next_version();
         // TODO: Emit a ChangedSurveyCategory event here.
         Ok(())
     }
 
-    pub fn change_description(&mut self, new_description: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_description(&mut self, new_description: String) -> Result<()> {
         self.description = Description::try_from(new_description)?;
         self.version = self.next_version();
         // TODO: Emit a ChangedSurveyDescription event here.
         Ok(())
     }
 
-    pub fn try_update_questions(&mut self, changesets: Vec<QuestionChangeset>) -> Result<(), Box<dyn Error>> {
+    pub fn try_update_questions(&mut self, changesets: Vec<QuestionChangeset>) -> Result<()> {
         for changeset in changesets {
             self.try_update_question(changeset)?;
         }
@@ -149,7 +151,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn try_update_question(&mut self, changeset: QuestionChangeset) -> Result<(), Box<dyn Error>> {
+    pub fn try_update_question(&mut self, changeset: QuestionChangeset) -> Result<()> {
         let q_id = changeset.id;
 
         if let Some(new_title) = changeset.title {
@@ -165,21 +167,23 @@ impl Survey {
         Ok(())
     }
 
-    fn find_question(&mut self, q_id: &String) -> Result<&mut Question, Box<dyn Error>> {
+    fn find_question(&mut self, q_id: &String) -> Result<&mut Question> {
         // does the question even exist?  Pass back error if not found.
         Ok(
             self.questions
             .iter_mut()
-            .find(|q| &q.id() == q_id).ok_or(NotPresent)?
+            .find(|q| &q.id() == q_id)
+                .ok_or(ResourceNotFound(format!("question with id {}", q_id)))?
         )
     }
 
-    fn find_choice(&mut self, c_id: &String) -> Result<&mut Choice, Box<dyn Error>> {
+    fn find_choice(&mut self, c_id: &String) -> Result<&mut Choice> {
         // does the choice even exist?  Pass back error if not found.
         Ok(
             self.choices_mut()
                 .into_iter()
-                .find(|c| &c.id() == c_id).ok_or(NotPresent)?
+                .find(|c| &c.id() == c_id)
+                .ok_or(ResourceNotFound(format!("choice with id {}", c_id)))?
         )
     }
 
@@ -191,7 +195,7 @@ impl Survey {
             }).collect()
     }
 
-    pub fn change_question_title(&mut self, q_id: &String, new_title: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_question_title(&mut self, q_id: &String, new_title: String) -> Result<()> {
         let question = self.find_question(q_id)?;
 
         let new_title = Title::try_from(new_title)?;
@@ -201,7 +205,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_question_type(&mut self, q_id: &String, new_type: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_question_type(&mut self, q_id: &String, new_type: String) -> Result<()> {
         let question = self.find_question(q_id)?;
 
         let new_type = QuestionType::try_from(new_type)?;
@@ -211,7 +215,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn try_update_choices(&mut self, changesets: Vec<ChoiceChangeset>) -> Result<(), Box<dyn Error>> {
+    pub fn try_update_choices(&mut self, changesets: Vec<ChoiceChangeset>) -> Result<()> {
         for changeset in changesets {
             self.try_update_choice(changeset)?;
         }
@@ -219,7 +223,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn try_update_choice(&mut self, changeset: ChoiceChangeset) -> Result<(), Box<dyn Error>> {
+    pub fn try_update_choice(&mut self, changeset: ChoiceChangeset) -> Result<()> {
         let c_id = changeset.id;
 
         if let Some(new_title) = changeset.title {
@@ -235,7 +239,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_choice_title(&mut self, c_id: &String, new_title: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_choice_title(&mut self, c_id: &String, new_title: String) -> Result<()> {
         let choice = self.find_choice(c_id)?;
 
         let new_title = Title::try_from(new_title)?;
@@ -245,7 +249,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_choice_content_type(&mut self, c_id: &String, new_type: String) -> Result<(), Box<dyn Error>> {
+    pub fn change_choice_content_type(&mut self, c_id: &String, new_type: String) -> Result<()> {
         let choice = self.find_choice(c_id)?;
 
         let new_type = ContentType::try_from(new_type)?;
@@ -255,7 +259,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_choice_content(&mut self, c_id: &String, new_content: Option<String>) -> Result<(), Box<dyn Error>> {
+    pub fn change_choice_content(&mut self, c_id: &String, new_content: Option<String>) -> Result<()> {
         let choice = self.find_choice(c_id)?;
 
         let content = if let Some(c) = new_content {
@@ -274,4 +278,6 @@ impl Survey {
 
 impl AggregateRoot for Survey {
     type Events = SurveyEvents;
+
+    type Error = Error;
 }
