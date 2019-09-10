@@ -5,11 +5,12 @@ authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
 edition = "2018"
 
 [dependencies]
-domain_patterns = "0.1.9"
-domain_derive = "0.1.95"
+domain_patterns = "0.1.98"
+domain_derive = "0.1.98"
 uuid = { version = "0.7.4", features = ["v4"] }
 serde = "1.0.99"
 serde_derive = "1.0.99"
 serde_json = "1.0.40"
 chrono = "0.4.9"
 jsonwebtoken = "6.0.1"
+failure = "0.1.5"

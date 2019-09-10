@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::domain::survey::input::{NewSurveyIn, NewQuestionIn, NewChoiceIn, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
+use crate::domain::survey::input::{NewSurveyData, NewQuestionData, NewChoiceData, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
 use std::convert::Into;
 use crate::application::services::decode_payload;
 
@@ -26,16 +26,17 @@ pub struct CreateChoice {
     pub title: String,
 }
 
-impl Into<NewSurveyIn> for CreateSurveyCommand {
-    fn into(self) -> NewSurveyIn {
-        let questions: Vec<NewQuestionIn> = self.questions
+impl Into<NewSurveyData> for CreateSurveyCommand {
+    fn into(self) -> NewSurveyData {
+        let author = decode_payload(&self.token).username;
+
+        let questions: Vec<NewQuestionData> = self.questions
             .into_iter()
             .map(|q| {
                 q.into()
             }).collect();
 
-        let author = decode_payload(&self.token).username;
-        NewSurveyIn {
+        NewSurveyData {
             author,
             title: self.title,
             description: self.description,
@@ -45,15 +46,15 @@ impl Into<NewSurveyIn> for CreateSurveyCommand {
     }
 }
 
-impl Into<NewQuestionIn> for CreateQuestion {
-    fn into(self) -> NewQuestionIn {
-        let choices: Vec<NewChoiceIn> = self.choices
+impl Into<NewQuestionData> for CreateQuestion {
+    fn into(self) -> NewQuestionData {
+        let choices: Vec<NewChoiceData> = self.choices
             .into_iter()
             .map(|c| {
                 c.into()
             }).collect();
 
-        NewQuestionIn {
+        NewQuestionData {
             question_type: self.question_type,
             title: self.title,
             choices,
@@ -61,9 +62,9 @@ impl Into<NewQuestionIn> for CreateQuestion {
     }
 }
 
-impl Into<NewChoiceIn> for CreateChoice {
-    fn into(self) -> NewChoiceIn {
-        NewChoiceIn {
+impl Into<NewChoiceData> for CreateChoice {
+    fn into(self) -> NewChoiceData {
+        NewChoiceData {
             content: self.content,
             content_type: self.content_type,
             title: self.title,

@@ -1,5 +1,17 @@
+pub mod errors;
+pub use errors::*;
+
 pub mod title;
 pub use title::*;
+
+pub mod author;
+pub use author::*;
+
+pub mod category;
+pub use category::*;
+
+pub mod description;
+pub use description::*;
 
 pub mod content_type;
 pub use content_type::*;
