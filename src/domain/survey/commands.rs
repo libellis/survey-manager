@@ -1,18 +1,25 @@
-pub struct NewSurveyData {
+use domain_patterns::command::Command;
+use domain_patterns::message::Message;
+
+#[derive(Clone, Command)]
+pub struct CreateSurveyCommand {
     pub author: String,
     pub title: String,
     pub description: String,
     pub category: String,
-    pub questions: Vec<NewQuestionData>,
+    pub questions: Vec<CreateQuestionCommand>,
 }
 
-pub struct NewQuestionData {
+// Sub-commands don't get considered commands in and of themselves.
+#[derive(Clone)]
+pub struct CreateQuestionCommand {
     pub question_type: String,
     pub title: String,
-    pub choices: Vec<NewChoiceData>
+    pub choices: Vec<CreateChoiceCommand>
 }
 
-pub struct NewChoiceData {
+#[derive(Clone)]
+pub struct CreateChoiceCommand {
     pub content: Option<String>,
     pub content_type: String,
     pub title: String,
@@ -37,4 +44,9 @@ pub struct ChoiceChangeset {
     pub content: Option<Option<String>>,
     pub content_type: Option<String>,
     pub title: Option<String>,
+}
+
+#[derive(Command)]
+pub enum SurveyCommands {
+    CreateSurveyCommand(CreateSurveyCommand)
 }

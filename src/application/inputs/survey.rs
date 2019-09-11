@@ -1,42 +1,42 @@
 use serde::Deserialize;
-use crate::domain::survey::input::{NewSurveyData, NewQuestionData, NewChoiceData, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
+use crate::domain::survey::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
 use std::convert::Into;
 use crate::application::services::decode_payload;
 
 #[derive(Deserialize)]
-pub struct CreateSurveyCommand {
+pub struct CreateSurveyDTO {
     pub token: String,
     pub title: String,
     pub description: String,
     pub category: String,
-    pub questions: Vec<CreateQuestion>,
+    pub questions: Vec<CreateQuestionDTO>,
 }
 
 #[derive(Deserialize)]
-pub struct CreateQuestion {
+pub struct CreateQuestionDTO {
     pub question_type: String,
     pub title: String,
-    pub choices: Vec<CreateChoice>
+    pub choices: Vec<CreateChoiceDTO>
 }
 
 #[derive(Deserialize)]
-pub struct CreateChoice {
+pub struct CreateChoiceDTO {
     pub content: Option<String>,
     pub content_type: String,
     pub title: String,
 }
 
-impl Into<NewSurveyData> for CreateSurveyCommand {
-    fn into(self) -> NewSurveyData {
+impl Into<CreateSurveyCommand> for CreateSurveyDTO {
+    fn into(self) -> CreateSurveyCommand {
         let author = decode_payload(&self.token).username;
 
-        let questions: Vec<NewQuestionData> = self.questions
+        let questions: Vec<CreateQuestionCommand> = self.questions
             .into_iter()
             .map(|q| {
                 q.into()
             }).collect();
 
-        NewSurveyData {
+        CreateSurveyCommand {
             author,
             title: self.title,
             description: self.description,
@@ -46,15 +46,15 @@ impl Into<NewSurveyData> for CreateSurveyCommand {
     }
 }
 
-impl Into<NewQuestionData> for CreateQuestion {
-    fn into(self) -> NewQuestionData {
-        let choices: Vec<NewChoiceData> = self.choices
+impl Into<CreateQuestionCommand> for CreateQuestionDTO {
+    fn into(self) -> CreateQuestionCommand {
+        let choices: Vec<CreateChoiceCommand> = self.choices
             .into_iter()
             .map(|c| {
                 c.into()
             }).collect();
 
-        NewQuestionData {
+        CreateQuestionCommand {
             question_type: self.question_type,
             title: self.title,
             choices,
@@ -62,9 +62,9 @@ impl Into<NewQuestionData> for CreateQuestion {
     }
 }
 
-impl Into<NewChoiceData> for CreateChoice {
-    fn into(self) -> NewChoiceData {
-        NewChoiceData {
+impl Into<CreateChoiceCommand> for CreateChoiceDTO {
+    fn into(self) -> CreateChoiceCommand {
+        CreateChoiceCommand {
             content: self.content,
             content_type: self.content_type,
             title: self.title,
@@ -73,32 +73,32 @@ impl Into<NewChoiceData> for CreateChoice {
 }
 
 #[derive(Deserialize)]
-pub struct UpdateSurveyCommand {
+pub struct UpdateSurveyDTO {
     pub token: String,
     pub id: String,
     pub title: Option<String>,
     pub description: Option<String>,
     pub category: Option<String>,
-    pub questions: Option<Vec<UpdateQuestionCommand>>,
+    pub questions: Option<Vec<UpdateQuestionDTO>>,
 }
 
 #[derive(Deserialize)]
-pub struct UpdateQuestionCommand {
+pub struct UpdateQuestionDTO {
     pub id: String,
     pub question_type: Option<String>,
     pub title: Option<String>,
-    pub choices: Option<Vec<UpdateChoiceCommand>>,
+    pub choices: Option<Vec<UpdateChoiceDTO>>,
 }
 
 #[derive(Deserialize)]
-pub struct UpdateChoiceCommand {
+pub struct UpdateChoiceDTO {
     pub id: String,
     pub content: Option<Option<String>>,
     pub content_type: Option<String>,
     pub title: Option<String>,
 }
 
-impl Into<SurveyChangeset> for UpdateSurveyCommand {
+impl Into<SurveyChangeset> for UpdateSurveyDTO {
     fn into(self) -> SurveyChangeset {
         let questions = if let Some(q) = self.questions {
             Some(q.into_iter()
@@ -118,7 +118,7 @@ impl Into<SurveyChangeset> for UpdateSurveyCommand {
     }
 }
 
-impl Into<QuestionChangeset> for UpdateQuestionCommand {
+impl Into<QuestionChangeset> for UpdateQuestionDTO {
     fn into(self) -> QuestionChangeset {
         let choices = if let Some(c) = self.choices {
             Some(c.into_iter()
@@ -138,7 +138,7 @@ impl Into<QuestionChangeset> for UpdateQuestionCommand {
     }
 }
 
-impl Into<ChoiceChangeset> for UpdateChoiceCommand {
+impl Into<ChoiceChangeset> for UpdateChoiceDTO {
     fn into(self) -> ChoiceChangeset {
         ChoiceChangeset {
             id: self.id,

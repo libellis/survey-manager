@@ -1,6 +1,6 @@
 use domain_patterns::collections::Repository;
 use crate::domain::survey::Survey;
-use crate::application::commands::{CreateSurveyCommand, UpdateSurveyCommand};
+use crate::application::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use std::error::Error;
 use std::convert::Into;
 use crate::application::outputs::survey_data::SurveyOut;
@@ -34,8 +34,8 @@ impl<T: Repository<Survey>> SurveyService<T> {
         )
     }
 
-    pub fn create_survey(&mut self, command: CreateSurveyCommand) -> Result<SurveyOut> {
-        let new_survey = Survey::new(command.into())?;
+    pub fn create_survey(&mut self, command: CreateSurveyDTO) -> Result<SurveyOut> {
+        let new_survey = Survey::new(&command.into())?;
 
         self.repo.insert(&new_survey)?;
 
@@ -44,7 +44,7 @@ impl<T: Repository<Survey>> SurveyService<T> {
         )
     }
 
-    pub fn update_survey(&mut self, command: UpdateSurveyCommand) -> Result<SurveyOut> {
+    pub fn update_survey(&mut self, command: UpdateSurveyDTO) -> Result<SurveyOut> {
         let mut survey = self.repo.get(&command.id)?
             .ok_or(ResourceNotFound(format!("survey with id {}", &command.id)))?;
 

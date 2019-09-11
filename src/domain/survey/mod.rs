@@ -9,14 +9,14 @@ pub use events::*;
 
 /// Input module provides input argument structures for survey aggregate root
 /// constructor.
-pub mod input;
+pub mod commands;
 
 use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
 use std::convert::TryFrom;
 use chrono::Utc;
-use crate::domain::survey::input::{NewSurveyData, NewQuestionData, NewChoiceData, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
+use crate::domain::survey::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
 use std::env::VarError::NotPresent;
 use crate::errors::Result;
 use crate::errors::Error;
@@ -37,22 +37,22 @@ pub struct Survey {
 
 impl Survey {
     pub fn new(
-        new_survey: NewSurveyData,
+        new_survey: &CreateSurveyCommand,
     ) -> Result<Survey> {
         Ok(Survey {
             id: Uuid::new_v4(),
             version: 0,
-            author: Author::try_from(new_survey.author)?,
-            title: Title::try_from(new_survey.title)?,
-            description: Description::try_from(new_survey.description)?,
+            author: Author::try_from(new_survey.author.clone())?,
+            title: Title::try_from(new_survey.title.clone())?,
+            description: Description::try_from(new_survey.description.clone())?,
             created_on: Utc::now().timestamp(),
-            category: Category::try_from(new_survey.category)?,
-            questions: Self::create_questions(new_survey.questions)?
+            category: Category::try_from(new_survey.category.clone())?,
+            questions: Self::create_questions(new_survey.questions.clone())?
         })
     }
 
     // CONSTRUCTORS FOR CHILD ENTITIES
-    fn create_questions(new_questions: Vec<NewQuestionData>) -> Result<Vec<Question>> {
+    fn create_questions(new_questions: Vec<CreateQuestionCommand>) -> Result<Vec<Question>> {
         let q_results = new_questions
             .into_iter()
             .map(|q| { Self::create_question(q) });
@@ -66,7 +66,7 @@ impl Survey {
         Ok(questions)
     }
 
-    fn create_question(new_question: NewQuestionData) -> Result<Question> {
+    fn create_question(new_question: CreateQuestionCommand) -> Result<Question> {
         Ok(Question {
             id: Uuid::new_v4(),
             version: 0,
@@ -76,7 +76,7 @@ impl Survey {
         })
     }
 
-    fn create_choices(new_choices: Vec<NewChoiceData>) -> Result<Vec<Choice>> {
+    fn create_choices(new_choices: Vec<CreateChoiceCommand>) -> Result<Vec<Choice>> {
         let c_results = new_choices
             .into_iter()
             .map(|c| { Self::create_choice(c) });
@@ -90,7 +90,7 @@ impl Survey {
         Ok(choices)
     }
 
-    fn create_choice(new_choice: NewChoiceData) -> Result<Choice> {
+    fn create_choice(new_choice: CreateChoiceCommand) -> Result<Choice> {
         Ok(Choice {
             id: Uuid::new_v4(),
             version: 0,
