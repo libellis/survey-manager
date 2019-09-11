@@ -12,12 +12,6 @@ pub struct Error {
     ctx: Context<ErrorKind>,
 }
 
-//impl std::error::Error for Error {
-//    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-//        self.ctx.cause()
-//    }
-//}
-
 impl Fail for Error {
     fn cause(&self) -> Option<&dyn Fail> {
         self.ctx.cause()

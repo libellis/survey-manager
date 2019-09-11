@@ -5,8 +5,8 @@ authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
 edition = "2018"
 
 [dependencies]
-domain_patterns = "0.1.98"
-domain_derive = "0.1.98"
+domain_patterns = "0.2.1"
+domain_derive = "0.2.13"
 uuid = { version = "0.7.4", features = ["v4"] }
 serde = "1.0.99"
 serde_derive = "1.0.99"
