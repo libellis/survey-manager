@@ -1,8 +1,7 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
 use crate::errors::{Error, Result};
-use crate::errors::ErrorKind::ValidationError;
-use crate::domain::value_objects::ValidationError::QuestionTypeValidationError;
+use crate::value_objects::ValidationError::QuestionTypeValidationError;
 
 #[derive(Clone, PartialEq)]
 pub enum QuestionType {

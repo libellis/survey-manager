@@ -1,6 +1,6 @@
 use uuid::Uuid;
-use crate::domain::value_objects::title::Title;
-use crate::domain::value_objects::content_type::ContentType;
+use crate::value_objects::title::Title;
+use crate::value_objects::content_type::ContentType;
 
 #[derive(Entity)]
 pub struct Choice {

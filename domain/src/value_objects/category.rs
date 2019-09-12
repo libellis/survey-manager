@@ -1,6 +1,6 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
-use crate::domain::value_objects::ValidationError;
+use crate::value_objects::ValidationError;
 use crate::errors::{Error, Result};
 
 #[derive(Clone, PartialEq)]

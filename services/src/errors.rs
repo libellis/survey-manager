@@ -1,7 +1,6 @@
 use failure::{Context, Fail, Backtrace};
-use crate::domain::value_objects::ValidationError;
+use survey_manager_domain::value_objects::ValidationError;
 use std::fmt;
-use std::path::{Path, PathBuf};
 use std::result;
 
 pub type Result<T> = result::Result<T, Error>;

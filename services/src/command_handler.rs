@@ -1,17 +1,9 @@
 use domain_patterns::collections::Repository;
-use crate::domain::survey::Survey;
-use crate::application::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
-use std::convert::Into;
-use crate::Error;
-use crate::application::outputs::survey_data::SurveyOut;
-use crate::application::services::decode_payload;
-use crate::errors::ErrorKind::{ResourceNotFound, NotAuthorized};
-use crate::errors::Result;
 use domain_patterns::command::Handles;
-use crate::domain::survey::commands::{SurveyCommands, CreateSurveyCommand};
+use survey_manager_commands::*;
+use survey_manager_domain::survey::Survey;
+use super::{Result, Error, ErrorKind};
 
-/// TODO: Figure out how to coalesce the error return types since we don't know
-/// the error type of SurveyService.
 pub struct SurveyCommandsHandler<T> where
     T: Repository<Survey>
 {

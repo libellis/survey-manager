@@ -1,8 +1,7 @@
 use domain_patterns::models::ValueObject;
 use std::convert::TryFrom;
-use crate::domain::value_objects::ValidationError::ContentTypeValidationError;
-use crate::domain::value_objects::ValidationError;
 use crate::errors::{Error, Result};
+use crate::value_objects::ValidationError::ContentTypeValidationError;
 
 #[derive(Clone, PartialEq)]
 pub enum ContentType {
@@ -46,7 +45,7 @@ impl ValueObject<String> for ContentType {
             "spotify" => Ok(()),
             "soundcloud" => Ok(()),
             _ => Err(
-                ValidationError::ContentTypeValidationError {
+                ContentTypeValidationError {
                     msg: "That content type is not supported by our system yet.".to_string()
                 }.into()
             ),

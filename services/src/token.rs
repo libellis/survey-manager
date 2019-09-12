@@ -1,4 +1,4 @@
-use jsonwebtoken::{encode, decode, Algorithm, Header, Validation};
+use jsonwebtoken::{encode, decode, Header, Validation};
 use chrono::Utc;
 
 #[derive(Debug, Serialize, Deserialize)]

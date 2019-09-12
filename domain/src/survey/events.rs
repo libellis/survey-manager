@@ -2,7 +2,7 @@ use domain_patterns::event::DomainEvent;
 use domain_patterns::message::Message;
 use domain_patterns::models::Entity;
 use uuid::Uuid;
-use crate::domain::survey::Survey;
+use crate::survey::Survey;
 use chrono::Utc;
 
 #[derive(DomainEvent)]

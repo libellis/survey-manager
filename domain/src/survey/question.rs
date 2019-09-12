@@ -1,6 +1,6 @@
 use uuid::Uuid;
-use crate::domain::value_objects::{QuestionType, Title};
-use crate::domain::survey::Choice;
+use crate::value_objects::{QuestionType, Title};
+use crate::survey::Choice;
 
 // TODO: Remove version from entities.  Only aggregate roots should have a version.
 #[derive(Entity)]

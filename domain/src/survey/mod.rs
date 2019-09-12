@@ -7,17 +7,13 @@ pub use question::*;
 pub mod events;
 pub use events::*;
 
-/// Input module provides input argument structures for survey aggregate root
-/// constructor.
-pub mod commands;
+use survey_manager_commands::*;
 
-use crate::domain::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
+use crate::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
-use std::convert::TryFrom;
 use chrono::Utc;
-use crate::domain::survey::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, SurveyChangeset, QuestionChangeset, ChoiceChangeset};
-use std::env::VarError::NotPresent;
+use std::convert::TryFrom;
 use crate::errors::Result;
 use crate::errors::Error;
 use crate::errors::ErrorKind::ResourceNotFound;
