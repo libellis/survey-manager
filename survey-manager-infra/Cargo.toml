@@ -1,0 +1,13 @@
+[package]
+name = "survey-manager-infra"
+version = "0.1.0"
+authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
+edition = "2018"
+
+[dependencies]
+domain_patterns = "0.2.12"
+survey-manager-core = { path = "../survey-manager-core" }
+mysql = "16.1.0"
+r2d2 = "0.8.5"
+r2d2_mysql = "16.0.0"
+failure = "0.1.5"

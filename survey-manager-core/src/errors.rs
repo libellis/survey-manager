@@ -44,6 +44,12 @@ pub enum ErrorKind {
     /// NotAuthorized conveys that the caller is not authorized to commit the action.
     NotAuthorized,
 
+    // TODO: Flush this out.  We work with a generic repository so we can't possibly know in advance
+    // what kind of database level errors it might return.  How do we make this better?
+    /// DbFailure conveys to the caller that some kind of error happened on the database level.
+    /// This might have been a concurrency error, or failure to communicate with the database.
+    DbFailure,
+
     /// Hints that destructuring should not be exhaustive.
     ///
     /// This enum may grow additional variants, so this makes sure clients
@@ -60,10 +66,13 @@ impl std::fmt::Display for ErrorKind {
                 std::fmt::Display::fmt(v, f)
             }
             ErrorKind::ResourceNotFound(ref name) => {
-                write!(f, "Resource '{}' was not found.", name)
+                write!(f, "resource '{}' was not found", name)
             }
             ErrorKind::NotAuthorized => {
-                write!(f, "Not Authorized.")
+                write!(f, "not Authorized")
+            }
+            ErrorKind::DbFailure => {
+                write!(f, "database failure")
             }
             ErrorKind::__Nonexhaustive => panic!("invalid error"),
         }
