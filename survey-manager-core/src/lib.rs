@@ -5,7 +5,7 @@ extern crate domain_derive;
 extern crate serde_derive;
 
 #[macro_use]
-extern crate failure;
+extern crate snafu;
 
 pub mod errors;
 // Re-publish because of requirement by derive that Error be published to root.

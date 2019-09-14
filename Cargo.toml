@@ -3,4 +3,5 @@
 members = [
     "survey-manager-core",
     "survey-manager-api",
+    "survey-manager-infra",
 ]

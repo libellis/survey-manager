@@ -15,7 +15,7 @@ use chrono::Utc;
 use crate::app_services::commands::*;
 use crate::errors::Result;
 use crate::errors::Error;
-use crate::errors::ErrorKind::ResourceNotFound;
+use crate::errors::Error::ResourceNotFound;
 
 #[derive(Entity)]
 pub struct Survey {
@@ -166,7 +166,7 @@ impl Survey {
             self.questions
             .iter_mut()
             .find(|q| &q.id() == q_id)
-                .ok_or(ResourceNotFound(format!("question with id {}", q_id)))?
+                .ok_or(ResourceNotFound { resource: format!("question with id {}", q_id) })?
         )
     }
 
@@ -176,7 +176,7 @@ impl Survey {
             self.choices_mut()
                 .into_iter()
                 .find(|c| &c.id() == c_id)
-                .ok_or(ResourceNotFound(format!("choice with id {}", c_id)))?
+                .ok_or(ResourceNotFound { resource: format!("choice with id {}", c_id) })?
         )
     }
 

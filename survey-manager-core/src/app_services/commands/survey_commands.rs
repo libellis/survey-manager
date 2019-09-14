@@ -5,9 +5,10 @@ use domain_patterns::collections::Repository;
 use crate::survey::Survey;
 use std::convert::Into;
 use crate::Error;
-use crate::errors::ErrorKind::{ResourceNotFound, NotAuthorized};
+use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure};
 use crate::errors::Result;
 use domain_patterns::command::Handles;
+use snafu::ResultExt;
 
 #[derive(Clone, Command)]
 pub enum SurveyCommands {
@@ -51,7 +52,8 @@ impl<T: Repository<Survey>> Handles<CreateSurveyCommand> for SurveyCommandsHandl
     fn handle(&mut self, msg: &CreateSurveyCommand) -> Result<()> {
         let new_survey = Survey::new(msg)?;
 
-        self.repo.insert(&new_survey)?;
+        self.repo.insert(&new_survey)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
         Ok(())
     }
@@ -61,11 +63,12 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
     type Error = Error;
 
     fn handle(&mut self, msg: &UpdateSurveyCommand) -> Result<()> {
-        let mut survey = self.repo.get(&msg.id)?
-            .ok_or(ResourceNotFound(format!("survey with id {}", &msg.id)))?;
+        let mut survey = self.repo.get(&msg.id)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?
+            .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
 
         if !survey.belongs_to(&msg.author) {
-            return Err(NotAuthorized.into())
+            return Err(NotAuthorized.into());
         }
 
         survey.try_update(msg)?;
