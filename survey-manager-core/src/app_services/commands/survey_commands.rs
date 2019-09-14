@@ -52,9 +52,8 @@ impl<T: Repository<Survey>> Handles<CreateSurveyCommand> for SurveyCommandsHandl
     fn handle(&mut self, msg: &CreateSurveyCommand) -> Result<()> {
         let new_survey = Survey::new(msg)?;
 
-//        if let Err(_) = self.repo.insert(&new_survey) {
-//            return Err(RepoFailure.into());
-//        }
+        self.repo.insert(&new_survey)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
         Ok(())
     }
@@ -64,16 +63,9 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
     type Error = Error;
 
     fn handle(&mut self, msg: &UpdateSurveyCommand) -> Result<()> {
-        // TODO: This is much cleaner, figure out how to make this work.
         let mut survey = self.repo.get(&msg.id)
             .map_err(|e| RepoFailure { source: Box::new(e) })?
             .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
-
-//        let mut survey = if let Ok(s) = self.repo.get(&msg.id) {
-//            s.ok_or(ResourceNotFound{ resource: format!("survey with id {}", &msg.id) })?
-//        } else {
-//            return Err(RepoFailure.into());
-//        };
 
         if !survey.belongs_to(&msg.author) {
             return Err(NotAuthorized.into());
