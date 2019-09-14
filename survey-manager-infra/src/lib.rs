@@ -1,4 +1,6 @@
 pub mod mysql_repos;
+pub mod errors;
+pub use errors::*;
 
 #[cfg(test)]
 mod tests {

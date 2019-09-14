@@ -10,14 +10,14 @@ pub struct MysqlSurveyRepository {
 
 // TODO: Build in transaction support.
 impl Repository<Survey> for MysqlSurveyRepository {
-    type Error = failure::Error;
+    type Error = crate::Error;
 
     fn insert(&mut self, entity: &Survey) -> Result<Option<Survey>, Self::Error> {
         // In this example survey_data is json of the entire survey object.  the other fields are just useful for query purposes and duplicate data.
-        self.conn.prep_exec(
-            "INSERT INTO surveys (id, version, author, title, category, created_on, survey_data) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (entity.id(), entity.version(), entity.author(), entity.title(), entity.category(), entity.created_on(), entity)
-        );
+//        self.conn.prep_exec(
+//            "INSERT INTO surveys (id, version, author, title, category, created_on, survey_data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+//            (entity.id(), entity.version(), entity.author(), entity.title(), entity.category(), entity.created_on(), entity)
+//        );
         unimplemented!()
     }
 
