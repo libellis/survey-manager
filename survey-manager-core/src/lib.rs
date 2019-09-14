@@ -13,13 +13,14 @@ pub use errors::Error;
 
 pub mod app_services;
 pub mod survey;
-pub mod outputs;
+pub mod dtos;
 pub mod value_objects;
+
+use domain_patterns::models::Entity;
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }
