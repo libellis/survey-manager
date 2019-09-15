@@ -5,7 +5,7 @@ use mysql::{OptsBuilder, Opts};
 /// pool.
 pub type Pool = r2d2::Pool<MysqlConnectionManager>;
 
-fn init(db_url: &str) -> Pool {
+pub fn create_pool(db_url: &str) -> Pool {
     let opts = Opts::from_url(&db_url).unwrap();
     let builder = OptsBuilder::from_opts(opts);
     let manager = MysqlConnectionManager::new(builder);
