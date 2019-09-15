@@ -15,6 +15,8 @@ pub enum ValidationError {
     DescriptionValidationError {
         msg: String,
     },
+    // TODO: Just put error message here and list out valid categories by printing
+    // enum.  Do same for others with enum types.
     #[snafu(display("Category failed to validate. {}", msg))]
     CategoryValidationError {
         msg: String,
