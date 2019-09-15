@@ -31,6 +31,16 @@ pub struct Survey {
     questions: Vec<Question>,
 }
 
+impl AggregateRoot for Survey {
+    type Events = SurveyEvents;
+
+    type Error = Error;
+
+    fn version(&self) -> u64 {
+        self.version as u64
+    }
+}
+
 impl Survey {
     pub fn new(
         new_survey: &CreateSurveyCommand,
@@ -65,7 +75,6 @@ impl Survey {
     fn create_question(new_question: CreateQuestionCommand) -> Result<Question> {
         Ok(Question {
             id: Uuid::new_v4(),
-            version: 0,
             question_type: QuestionType::try_from(new_question.question_type)?,
             title: Title::try_from(new_question.title)?,
             choices: Self::create_choices(new_question.choices)?,
@@ -89,7 +98,6 @@ impl Survey {
     fn create_choice(new_choice: CreateChoiceCommand) -> Result<Choice> {
         Ok(Choice {
             id: Uuid::new_v4(),
-            version: 0,
             // TODO: Update for content translation once we understand embed strings.
             content: None,
             content_type: ContentType::try_from(new_choice.content_type)?,
@@ -114,33 +122,27 @@ impl Survey {
         if let Some(q_changesets) = &changeset.questions {
             self.try_update_questions(q_changesets)?;
         }
-
-        Ok(())
-    }
-
-    pub fn change_title(&mut self, new_title: &String) -> Result<()> {
-        let new_title = Title::try_from(new_title.clone())?;
-        self.title = new_title;
+        // got to here so we succeeded and should version up.
         self.version = self.next_version();
-        // TODO: Emit a ChangedSurveyTitle event here.
         Ok(())
     }
 
-    pub fn change_category(&mut self, new_category: &String) -> Result<()> {
+    fn change_title(&mut self, new_title: &String) -> Result<()> {
+        self.title = Title::try_from(new_title.clone())?;
+        Ok(())
+    }
+
+    fn change_category(&mut self, new_category: &String) -> Result<()> {
         self.category = Category::try_from(new_category.clone())?;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedSurveyCategory event here.
         Ok(())
     }
 
-    pub fn change_description(&mut self, new_description: &String) -> Result<()> {
+    fn change_description(&mut self, new_description: &String) -> Result<()> {
         self.description = Description::try_from(new_description.clone())?;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedSurveyDescription event here.
         Ok(())
     }
 
-    pub fn try_update_questions(&mut self, changesets: &Vec<UpdateQuestionCommand>) -> Result<()> {
+    fn try_update_questions(&mut self, changesets: &Vec<UpdateQuestionCommand>) -> Result<()> {
         for changeset in changesets {
             self.try_update_question(changeset)?;
         }
@@ -148,7 +150,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn try_update_question(&mut self, changeset: &UpdateQuestionCommand) -> Result<()> {
+    fn try_update_question(&mut self, changeset: &UpdateQuestionCommand) -> Result<()> {
         if let Some(new_title) = &changeset.title {
             self.change_question_title(&changeset.id, new_title)?;
         }
@@ -190,27 +192,19 @@ impl Survey {
             }).collect()
     }
 
-    pub fn change_question_title(&mut self, q_id: &String, new_title: &String) -> Result<()> {
+    fn change_question_title(&mut self, q_id: &String, new_title: &String) -> Result<()> {
         let question = self.find_question(q_id)?;
-
-        let new_title = Title::try_from(new_title.clone())?;
-        question.title = new_title;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedQuestionTitle event here.
+        question.title = Title::try_from(new_title.clone())?;
         Ok(())
     }
 
-    pub fn change_question_type(&mut self, q_id: &String, new_type: &String) -> Result<()> {
+    fn change_question_type(&mut self, q_id: &String, new_type: &String) -> Result<()> {
         let question = self.find_question(q_id)?;
-
-        let new_type = QuestionType::try_from(new_type.clone())?;
-        question.question_type = new_type;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedQuestionType event here.
+        question.question_type = QuestionType::try_from(new_type.clone())?;
         Ok(())
     }
 
-    pub fn try_update_choices(&mut self, changesets: &Vec<UpdateChoiceCommand>) -> Result<()> {
+    fn try_update_choices(&mut self, changesets: &Vec<UpdateChoiceCommand>) -> Result<()> {
         for changeset in changesets {
             self.try_update_choice(changeset)?;
         }
@@ -218,7 +212,7 @@ impl Survey {
         Ok(())
     }
 
-    pub fn try_update_choice(&mut self, changeset: &UpdateChoiceCommand) -> Result<()> {
+    fn try_update_choice(&mut self, changeset: &UpdateChoiceCommand) -> Result<()> {
         if let Some(new_title) = &changeset.title {
             self.change_choice_title(&changeset.id, new_title)?;
         }
@@ -232,27 +226,19 @@ impl Survey {
         Ok(())
     }
 
-    pub fn change_choice_title(&mut self, c_id: &String, new_title: &String) -> Result<()> {
+    fn change_choice_title(&mut self, c_id: &String, new_title: &String) -> Result<()> {
         let choice = self.find_choice(c_id)?;
-
-        let new_title = Title::try_from(new_title.clone())?;
-        choice.title = new_title;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedChoiceTitle event here.
+        choice.title = Title::try_from(new_title.clone())?;
         Ok(())
     }
 
-    pub fn change_choice_content_type(&mut self, c_id: &String, new_type: &String) -> Result<()> {
+    fn change_choice_content_type(&mut self, c_id: &String, new_type: &String) -> Result<()> {
         let choice = self.find_choice(c_id)?;
-
-        let new_type = ContentType::try_from(new_type.clone())?;
-        choice.content_type = new_type;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedChoiceContentType event here.
+        choice.content_type = ContentType::try_from(new_type.clone())?;
         Ok(())
     }
 
-    pub fn change_choice_content(&mut self, c_id: &String, new_content: &Option<String>) -> Result<()> {
+    fn change_choice_content(&mut self, c_id: &String, new_content: &Option<String>) -> Result<()> {
         let choice = self.find_choice(c_id)?;
 
         let content = if let Some(c) = new_content {
@@ -263,33 +249,6 @@ impl Survey {
         };
 
         choice.content = content;
-        self.version = self.next_version();
-        // TODO: Emit a ChangedChoiceContent event here.
         Ok(())
     }
-}
-
-impl From<SurveyDTO> for Survey {
-    fn from(dto: SurveyDTO) -> Self {
-        let questions: Vec<Question> = dto.questions.into_iter()
-            .map(|q| {
-                Question::from(q)
-            }).collect();
-        Survey {
-            id: Uuid::from_str(&dto.id).unwrap().clone(),
-            version: dto.version,
-            author: Author::try_from(dto.author).unwrap(),
-            title: Title::try_from(dto.title).unwrap(),
-            description: Description::try_from(dto.description).unwrap(),
-            created_on: dto.created_on,
-            category: Category::try_from(dto.category).unwrap(),
-            questions,
-        }
-    }
-}
-
-impl AggregateRoot for Survey {
-    type Events = SurveyEvents;
-
-    type Error = Error;
 }

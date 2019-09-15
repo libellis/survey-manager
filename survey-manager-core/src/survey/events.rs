@@ -1,6 +1,6 @@
 use domain_patterns::event::DomainEvent;
 use domain_patterns::message::Message;
-use domain_patterns::models::Entity;
+use domain_patterns::models::{Entity, AggregateRoot};
 use uuid::Uuid;
 use crate::survey::Survey;
 use chrono::Utc;
@@ -14,7 +14,6 @@ pub struct SurveyCreatedEvent {
     author: String,
     title: String,
     description: String,
-    created_on: i64,
     category: String,
     questions: Vec<QuestionCreatedEvent>
 }
@@ -61,11 +60,10 @@ impl From<&Survey> for SurveyCreatedEvent {
             id: Uuid::new_v4(),
             aggregate_id: survey.id(),
             version: survey.version(),
-            occurred: Utc::now().timestamp(),
+            occurred: survey.created_on,
             author: survey.author.to_string(),
             title: survey.title.to_string(),
             description: survey.description.to_string(),
-            created_on: survey.created_on,
             category: survey.category.to_string(),
             questions,
         }

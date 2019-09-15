@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use std::convert::{From, TryFrom};
-use domain_patterns::models::Entity;
+use domain_patterns::models::{Entity, AggregateRoot};
 use crate::survey::{Choice, Survey, Question};
 use uuid::Uuid;
 use std::str::FromStr;
@@ -21,7 +21,6 @@ pub struct SurveyDTO {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionDTO {
     pub id: String,
-    pub version: u64,
     pub question_type: String,
     pub title: String,
     pub choices: Vec<ChoiceDTO>
@@ -30,7 +29,6 @@ pub struct QuestionDTO {
 #[derive(Serialize, Deserialize)]
 pub struct ChoiceDTO {
     pub id: String,
-    pub version: u64,
     pub content: Option<String>,
     pub content_type: String,
     pub title: String,
@@ -65,7 +63,6 @@ impl From<&Question> for QuestionDTO {
 
         QuestionDTO {
             id: q.id().to_string(),
-            version: q.version(),
             question_type: q.question_type().to_string(),
             title: q.title().to_string(),
             choices,
@@ -83,7 +80,6 @@ impl From<&Choice> for ChoiceDTO {
 
         ChoiceDTO {
             id: choice.id().to_string(),
-            version: choice.version(),
             content,
             content_type: choice.content_type().to_string(),
             title: choice.title().to_string(),
@@ -111,54 +107,3 @@ impl From<&Survey> for SurveyDTO {
         }
     }
 }
-
-//impl Into<Survey> for SurveyDTO {
-//    fn into(self) -> Survey {
-//        let questions: Vec<Question> = self.questions.into_iter()
-//            .map(|q| {
-//                q.into()
-//            }).collect();
-//        // Unwrapping because these should be valid if they are coming from a DTO.
-//        Survey {
-//            id: Uuid::from_str(self.id.as_ref()).unwrap().clone(),
-//            version: self.version,
-//            author: Author::try_from(self.author.clone()).unwrap(),
-//            title: Title::try_from(self.title.clone()).unwrap(),
-//            description: Description::try_from(self.description.clone()).unwrap(),
-//            created_on: self.created_on,
-//            category: Category::try_from(self.category.clone()).unwrap(),
-//            questions,
-//        }
-//    }
-//}
-//
-//impl Into<Question> for QuestionDTO {
-//    fn into(self) -> Question {
-//        let choices: Vec<Choice> = self.choices.into_iter()
-//            .map(|c| {
-//                c.into()
-//            }).collect();
-//        // Unwrapping because these should be valid if they are coming from a DTO.
-//        Question {
-//            id: Uuid::from_str(self.id.as_ref()).unwrap().clone(),
-//            version: self.version,
-//            question_type: QuestionType::try_from(self.question_type.clone()).unwrap(),
-//            title: Title::try_from(self.title.clone()).unwrap(),
-//            choices,
-//        }
-//    }
-//}
-//
-//impl Into<Choice> for ChoiceDTO {
-//    fn into(self) -> Choice {
-//        // Unwrapping because these should be valid if they are coming from a DTO.
-//        Choice {
-//            id: Uuid::from_str(self.id.as_ref()).unwrap().clone(),
-//            version: self.version,
-//            // TODO: Fix/update once we actually understand how embedded content works.
-//            content: None,
-//            content_type: ContentType::try_from(self.content_type.clone()).unwrap(),
-//            title: Title::try_from(self.title.clone()).unwrap(),
-//        }
-//    }
-//}

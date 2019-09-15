@@ -47,22 +47,22 @@ impl<T> SurveyCommandsHandler<T> where
 }
 
 impl<T: Repository<Survey>> Handles<CreateSurveyCommand> for SurveyCommandsHandler<T> {
-    type Error = Error;
+    type Result = Result<Option<String>>;
 
-    fn handle(&mut self, msg: &CreateSurveyCommand) -> Result<()> {
+    fn handle(&mut self, msg: &CreateSurveyCommand) -> Result<Option<String>> {
         let new_survey = Survey::new(msg)?;
 
-        self.repo.insert(&new_survey)
+        let s_id = self.repo.insert(&new_survey)
             .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
-        Ok(())
+        Ok(s_id)
     }
 }
 
 impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandler<T> {
-    type Error = Error;
+    type Result = Result<Option<String>>;
 
-    fn handle(&mut self, msg: &UpdateSurveyCommand) -> Result<()> {
+    fn handle(&mut self, msg: &UpdateSurveyCommand) -> Result<Option<String>> {
         let mut survey = self.repo.get(&msg.id)
             .map_err(|e| RepoFailure { source: Box::new(e) })?
             .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
@@ -73,14 +73,17 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
 
         survey.try_update(msg)?;
 
-        Ok(())
+        let s_id = self.repo.update(&survey)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?;
+
+        Ok(s_id)
     }
 }
 
 impl<T: Repository<Survey>> Handles<SurveyCommands> for SurveyCommandsHandler<T> {
-    type Error = Error;
+    type Result = Result<Option<String>>;
 
-    fn handle(&mut self, msg: &SurveyCommands) -> Result<()> {
+    fn handle(&mut self, msg: &SurveyCommands) -> Result<Option<String>> {
         match msg {
             SurveyCommands::CreateSurveyCommand(cmd) => self.handle(cmd),
             SurveyCommands::UpdateSurveyCommand(cmd) => self.handle(cmd),
