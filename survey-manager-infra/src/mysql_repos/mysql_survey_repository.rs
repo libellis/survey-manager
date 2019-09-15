@@ -1,7 +1,7 @@
 use domain_patterns::collections::Repository;
 use survey_manager_core::survey::Survey;
 use survey_manager_core::dtos::SurveyDTO;
-use domain_patterns::models::Entity;
+use domain_patterns::models::{Entity, AggregateRoot};
 use mysql;
 use mysql::Error;
 use mysql::error::ServerError;

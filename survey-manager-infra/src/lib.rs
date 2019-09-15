@@ -7,11 +7,13 @@ pub mod utils;
 mod tests {
     use crate::mysql_repos::MysqlSurveyRepository;
     use domain_patterns::collections::Repository;
-    use domain_patterns::models::Entity;
+    use domain_patterns::models::{Entity, AggregateRoot};
     use survey_manager_core::survey::Survey;
-    use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand};
+    use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand};
     use dotenv::dotenv;
     use std::env;
+    use std::convert::TryFrom;
+    use survey_manager_core::value_objects::Title;
 
     fn create_test_survey() -> Survey {
         let choice = CreateChoiceCommand {
@@ -113,14 +115,23 @@ mod tests {
             let mut survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
-            let new_title = "new_title".to_string();
-            survey.change_title(&new_title);
+            let new_title = Title::try_from("test_title".to_string()).unwrap();
+            let survey_update_command = UpdateSurveyCommand {
+                id: survey.id(),
+                author: "".to_string(),
+                title: Some(new_title.to_string()),
+                description: None,
+                category: None,
+                questions: None
+            };
+
+            survey.try_update(&survey_update_command).unwrap();
 
             survey_repo.update(&survey).unwrap();
 
             let updated_survey = survey_repo.get(&survey.id()).unwrap();
 
-            assert_eq!(&updated_survey.unwrap().title().to_string(), &new_title);
+            assert_eq!(&updated_survey.unwrap().title().to_string(), &new_title.to_string());
         }
     }
 

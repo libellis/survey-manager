@@ -252,3 +252,22 @@ impl Survey {
         Ok(())
     }
 }
+
+impl From<SurveyDTO> for Survey {
+    fn from(dto: SurveyDTO) -> Self {
+        let questions: Vec<Question> = dto.questions.into_iter()
+            .map(|q| {
+                Question::from(q)
+            }).collect();
+        Survey {
+            id: Uuid::from_str(&dto.id).unwrap().clone(),
+            version: dto.version,
+            author: Author::try_from(dto.author).unwrap(),
+            title: Title::try_from(dto.title).unwrap(),
+            description: Description::try_from(dto.description).unwrap(),
+            created_on: dto.created_on,
+            category: Category::try_from(dto.category).unwrap(),
+            questions,
+        }
+    }
+}

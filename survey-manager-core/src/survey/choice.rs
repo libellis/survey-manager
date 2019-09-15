@@ -4,6 +4,7 @@ use crate::value_objects::content_type::ContentType;
 use std::str::FromStr;
 use std::convert::TryFrom;
 use crate::survey::Content::Youtube;
+use crate::dtos::ChoiceDTO;
 
 #[derive(Entity)]
 pub struct Choice {
@@ -31,5 +32,23 @@ impl std::fmt::Display for Content {
         };
 
         write!(f, "{}", value)
+    }
+}
+
+impl From<ChoiceDTO> for Choice {
+    fn from(dto: ChoiceDTO) -> Self {
+        let content = if let Some(c) = dto.content {
+            // Todo: This is a placehoder.  fix once we figure out streaming content.
+            Some(Youtube(c))
+        } else {
+            None
+        };
+
+        Choice {
+            id: Uuid::from_str(&dto.id).unwrap().clone(),
+            content,
+            content_type: ContentType::try_from(dto.content_type).unwrap(),
+            title: Title::try_from(dto.title).unwrap(),
+        }
     }
 }
