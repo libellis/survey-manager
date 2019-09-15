@@ -5,8 +5,8 @@ authors = ["Peter Farr <Peter@PrismaPhonic.com>"]
 edition = "2018"
 
 [dependencies]
-domain_patterns = "0.2.1"
-domain_derive = "0.2.13"
+domain_patterns = "0.2.134"
+domain_derive = "0.2.131"
 survey-manager-core = { path = "../survey-manager-core" }
 uuid = { version = "0.7.4", features = ["v4"] }
 serde = "1.0.99"
