@@ -33,7 +33,7 @@ impl Repository<Survey> for MysqlSurveyRepository {
             "INSERT INTO survey (id, version, author, title, category, created_on, survey_data) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (entity.id(), entity.version(), entity.author().to_string(), entity.title().to_string(), entity.category().to_string(), entity.created_on(), survey_json)
         ) {
-            return handle_mysql_error(e);
+            return handle_duplicate_key(e);
         };
 
         // Success.  Return the PK back as is.
@@ -81,11 +81,18 @@ impl Repository<Survey> for MysqlSurveyRepository {
         let survey_json = serde_json::to_string(&survey_dto).unwrap();
 
         // In this example survey_data is json of the entire survey object.  the other fields are just useful for query purposes and duplicate data.
-        if let Err(e) = self.conn.prep_exec(
-            "UPDATE survey SET version = ?, title = ?, category = ?, survey_data = ?) WHERE id = ?",
+        match self.conn.prep_exec(
+            "UPDATE survey SET version = ?, title = ?, category = ?, survey_data = ? WHERE id = ?",
             (entity.version(), entity.title().to_string(), entity.category().to_string(), survey_json, entity.id())
         ) {
-            return handle_mysql_error(e);
+            Ok(result) => {
+                if result.affected_rows() == 0 {
+                    return Ok(None);
+                }
+            },
+            Err(e) => {
+                return Err(e);
+            }
         };
 
         // Success.  Return the PK back as is.
@@ -93,11 +100,18 @@ impl Repository<Survey> for MysqlSurveyRepository {
     }
 
     fn remove(&mut self, key: &String) -> Result<Option<String>, Self::Error> {
-        if let Err(e) = self.conn.prep_exec(
+        match self.conn.prep_exec(
             "DELETE FROM survey WHERE id = ?",
             (key,)
         ) {
-            return handle_mysql_error(e);
+            Ok(result) => {
+                if result.affected_rows() == 0 {
+                    return Ok(None);
+                }
+            },
+            Err(e) => {
+                return Err(e);
+            }
         };
 
         // Success.  Return the PK back as is.
@@ -105,11 +119,11 @@ impl Repository<Survey> for MysqlSurveyRepository {
     }
 }
 
-fn handle_mysql_error(error: mysql::Error) -> Result<Option<String>, mysql::Error> {
+fn handle_duplicate_key(error: mysql::Error) -> Result<Option<String>, mysql::Error> {
     if let Error::MySqlError(e) = error {
         // TODO: Make sure this is the right error code for valid primary key column name
         // in WHERE clause, but id supplied does not exist.
-        if e.code == ServerError::ER_KEY_NOT_FOUND as u16 {
+        if e.code == ServerError::ER_DUP_ENTRY as u16 {
             return Ok(None);
         }
         // Some other code, so return the error.
