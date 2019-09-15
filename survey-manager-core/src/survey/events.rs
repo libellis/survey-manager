@@ -1,36 +1,39 @@
+use serde::Serialize;
 use domain_patterns::event::DomainEvent;
 use domain_patterns::message::Message;
 use domain_patterns::models::{Entity, AggregateRoot};
 use uuid::Uuid;
 use crate::survey::Survey;
 use chrono::Utc;
+use crate::app_services::commands::UpdateSurveyCommand;
 
-#[derive(DomainEvent)]
+#[derive(DomainEvent, Serialize)]
 pub struct SurveyCreatedEvent {
-    id: Uuid,
-    aggregate_id: String,
-    version: u64,
-    occurred: i64,
-    author: String,
-    title: String,
-    description: String,
-    category: String,
-    questions: Vec<QuestionCreatedEvent>
+    pub id: String,
+    pub aggregate_id: String,
+    pub version: u64,
+    pub occurred: i64,
+    pub author: String,
+    pub title: String,
+    pub description: String,
+    pub category: String,
+    pub questions: Vec<QuestionCreatedEvent>
 }
 
+#[derive(Serialize)]
 pub struct QuestionCreatedEvent {
-    id: String,
-    question_type: String,
-    title: String,
-    choices: Vec<ChoiceCreatedEvent>
+    pub id: String,
+    pub question_type: String,
+    pub title: String,
+    pub choices: Vec<ChoiceCreatedEvent>
 }
 
+#[derive(Serialize)]
 pub struct ChoiceCreatedEvent {
-    id: String,
-    // Empty string if None.  Think about changing this?  not sure on this one.
-    content: String,
-    content_type: String,
-    title: String,
+    pub id: String,
+    pub content: Option<String>,
+    pub content_type: String,
+    pub title: String,
 }
 
 impl From<&Survey> for SurveyCreatedEvent {
@@ -42,9 +45,9 @@ impl From<&Survey> for SurveyCreatedEvent {
                 title: q.title().to_string(),
                 choices: q.choices.iter().map(|c|{
                     let content = if let Some(c) = &c.content {
-                        c.to_string()
+                        Some(c.to_string())
                     } else {
-                        "".to_string()
+                        None
                     };
                     ChoiceCreatedEvent {
                         id: c.id.to_string(),
@@ -57,7 +60,7 @@ impl From<&Survey> for SurveyCreatedEvent {
         }).collect();
 
         SurveyCreatedEvent {
-            id: Uuid::new_v4(),
+            id: Uuid::new_v4().to_string(),
             aggregate_id: survey.id(),
             version: survey.version(),
             occurred: survey.created_on,
@@ -70,7 +73,37 @@ impl From<&Survey> for SurveyCreatedEvent {
     }
 }
 
+#[derive(DomainEvent, Serialize)]
+pub struct SurveyUpdatedEvent {
+    pub id: String,
+    pub aggregate_id: String,
+    pub version: u64,
+    pub occurred: i64,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub questions: Option<Vec<QuestionUpdatedEvent>>,
+}
+
+#[derive(Serialize)]
+pub struct QuestionUpdatedEvent {
+    pub id: String,
+    pub question_type: Option<String>,
+    pub title: Option<String>,
+    pub choices: Option<Vec<ChoiceUpdatedEvent>>,
+}
+
+#[derive(Serialize)]
+pub struct ChoiceUpdatedEvent {
+    pub id: String,
+    // Empty string if None.  Think about changing this?  not sure on this one.
+    pub content: Option<Option<String>>,
+    pub content_type: Option<String>,
+    pub title: Option<String>,
+}
+
 #[derive(DomainEvents)]
 pub enum SurveyEvents {
-    SurveyCreatedEvent(SurveyCreatedEvent)
+    SurveyCreatedEvent(SurveyCreatedEvent),
+    SurveyUpdatedEvent(SurveyUpdatedEvent),
 }

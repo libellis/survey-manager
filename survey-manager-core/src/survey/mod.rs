@@ -109,7 +109,7 @@ impl Survey {
         &self.author.to_string() == author
     }
 
-    pub fn try_update(&mut self, changeset: &UpdateSurveyCommand) -> Result<()> {
+    pub fn try_update(&mut self, changeset: UpdateSurveyCommand) -> Result<SurveyUpdatedEvent> {
         if let Some(new_title) = &changeset.title {
             self.change_title(new_title)?;
         }
@@ -124,7 +124,7 @@ impl Survey {
         }
         // got to here so we succeeded and should version up.
         self.version = self.next_version();
-        Ok(())
+        Ok(self.updated_event(changeset))
     }
 
     fn change_title(&mut self, new_title: &String) -> Result<()> {
@@ -250,6 +250,52 @@ impl Survey {
 
         choice.content = content;
         Ok(())
+    }
+
+    // Conversion of cmd to event.  This is being put here for encapsulation reasons.  Only at the end of
+    // `try_update` method can we know for sure that the update succeeded in whole, so only the aggregate
+    // root (Survey) should be able to create the SurveyUpdatedEvent.  This event should essentially be a
+    // changeset (almost identical to the incoming command) so when it's serialized to json it only contains
+    // the diff.  At the same time we need data from the aggregate itself, like the version number, so
+    // we encapsulate this here to discourage misuse, and allow access to both the cmd data, and direct
+    // data from Survey object
+
+    fn updated_event(&self, cmd: UpdateSurveyCommand) -> SurveyUpdatedEvent {
+        let questions = if let Some(q) = cmd.questions {
+            Some(q.into_iter()
+                .map(|q| {
+                    QuestionUpdatedEvent {
+                        id: q.id,
+                        question_type: q.question_type,
+                        title: q.title,
+                        choices: if let Some(c) = q.choices {
+                            Some(c.into_iter()
+                                .map(|c| {
+                                    ChoiceUpdatedEvent {
+                                        id: c.id,
+                                        content: c.content,
+                                        content_type: c.content_type,
+                                        title: c.title
+                                    }
+                                }).collect())
+                        } else {
+                            None
+                        }
+                    }
+                }).collect())
+        } else {
+            None
+        };
+        SurveyUpdatedEvent {
+            id: Uuid::new_v4().to_string(),
+            aggregate_id: cmd.id,
+            version: self.version(),
+            occurred: Utc::now().timestamp(),
+            title: cmd.title,
+            description: cmd.description,
+            category: cmd.category,
+            questions,
+        }
     }
 }
 

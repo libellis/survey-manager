@@ -24,5 +24,5 @@ pub fn handle(
     conn: PooledConn,
     cmd: SurveyCommands,
 ) -> Result<Option<String>, String> {
-    get_handler(conn).handle(&cmd).map_err(|e| format!("{}", e))
+    get_handler(conn).handle(cmd).map_err(|e| format!("{}", e))
 }

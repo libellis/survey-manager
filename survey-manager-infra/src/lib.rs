@@ -125,7 +125,7 @@ mod tests {
                 questions: None
             };
 
-            survey.try_update(&survey_update_command).unwrap();
+            survey.try_update(survey_update_command).unwrap();
 
             survey_repo.update(&survey).unwrap();
 
