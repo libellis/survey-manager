@@ -7,8 +7,7 @@ use futures::{IntoFuture, Future};
 use serde_derive::{Serialize, Deserialize};
 use dotenv::dotenv;
 use uuid::Uuid;
-use survey_manager_core::app_services::queries::FindSurveyQuery;
-use survey_manager_core::app_services::queries::SurveyQueries::FindAuthorsSurveysQuery;
+use survey_manager_core::app_services::queries::{FindSurveyQuery, FindAuthorsSurveysQuery};
 use survey_manager_api::queries::handle_queries_async;
 
 #[derive(Serialize)]
@@ -19,6 +18,11 @@ struct Token {
 #[derive(Deserialize)]
 pub struct SurveyId {
     id: String,
+}
+
+#[derive(Deserialize)]
+pub struct Author {
+    author: String,
 }
 
 fn create_survey(
@@ -59,6 +63,22 @@ fn find_survey(
         })
 }
 
+fn find_authors_surveys(
+    pool: web::Data<Pool>,
+    params: web::Path<Author>,
+) -> impl Future<Item = HttpResponse, Error = AWError> {
+    let find_authors_surveys = FindAuthorsSurveysQuery { author: params.into_inner().author, page_config: None };
+
+    handle_queries_async(&pool, find_authors_surveys.into())
+        .from_err()
+        .and_then(|res| {
+            let text = if let Some(s) = res { s } else { "".to_string() };
+            Ok(HttpResponse::Ok()
+                .content_type("application/json")
+                .body(text))
+        })
+}
+
 fn get_token(
 ) -> Result<HttpResponse, AWError> {
     let fake_user_id = Uuid::new_v4();
@@ -86,6 +106,10 @@ fn main() -> std::io::Result<()> {
             .service(
                 web::resource("/survey/{id}")
                     .route(web::get().to_async(find_survey)),
+            )
+            .service(
+                web::resource("/{author}/survey")
+                    .route(web::get().to_async(find_authors_surveys)),
             )
             .service(
                 web::resource("/token")
