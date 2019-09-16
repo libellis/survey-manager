@@ -1,4 +1,4 @@
-use domain_patterns::collections::Repository;
+use domain_patterns::collections::{Repository, ReadRepository};
 use survey_manager_core::survey::Survey;
 use survey_manager_core::dtos::SurveyDTO;
 use domain_patterns::models::{Entity, AggregateRoot};
@@ -7,21 +7,20 @@ use mysql::Error;
 use mysql::error::ServerError;
 use mysql::from_row;
 
-pub struct MysqlSurveyRepository {
+pub struct MysqlSurveyWriteRepository {
     // A single connection to Mysql.  Handed down from a pool likely.
     conn: mysql::PooledConn,
 }
 
-impl MysqlSurveyRepository {
-    pub fn new(conn: mysql::PooledConn) -> MysqlSurveyRepository {
-        MysqlSurveyRepository {
+impl MysqlSurveyWriteRepository {
+    pub fn new(conn: mysql::PooledConn) -> MysqlSurveyWriteRepository {
+        MysqlSurveyWriteRepository {
             conn,
         }
     }
 }
 
-// TODO: Build in transaction support.
-impl Repository<Survey> for MysqlSurveyRepository {
+impl Repository<Survey> for MysqlSurveyWriteRepository {
     type Error = mysql::Error;
 
     fn insert(&mut self, entity: &Survey) -> Result<Option<String>, Self::Error> {
@@ -72,7 +71,7 @@ impl Repository<Survey> for MysqlSurveyRepository {
     }
 
     // Intentionally leaving this unimplemented.  we don't need it for command side.
-    fn get_paged(&mut self, page_num: usize, page_size: usize) -> Result<Vec<Survey>, Self::Error> {
+    fn get_paged(&mut self, page_num: usize, page_size: usize) -> Result<Option<Vec<Survey>>, Self::Error> {
         unimplemented!()
     }
 
@@ -134,3 +133,4 @@ fn handle_duplicate_key(error: mysql::Error) -> Result<Option<String>, mysql::Er
     // TODO: Add ways to deal with other errors as we actually enounter them.
     return Err(error);
 }
+

@@ -7,6 +7,11 @@ use std::str::FromStr;
 use crate::value_objects::{Author, Title, Description, Category, QuestionType, ContentType};
 
 #[derive(Serialize, Deserialize)]
+pub struct SurveyDTOs {
+    surveys: Vec<SurveyDTO>
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct SurveyDTO {
     pub id: String,
     pub version: u64,

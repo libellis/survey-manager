@@ -6,7 +6,8 @@ extern crate serde_derive;
 
 pub mod inputs;
 pub mod commands;
-pub mod config;
+pub mod queries;
+pub mod generate;
 
 #[cfg(test)]
 mod tests {

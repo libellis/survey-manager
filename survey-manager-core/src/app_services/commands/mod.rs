@@ -6,3 +6,6 @@ pub use update_survey_command::*;
 
 pub mod survey_commands;
 pub use survey_commands::*;
+
+pub mod survey_commands_handler;
+pub use survey_commands_handler::*;

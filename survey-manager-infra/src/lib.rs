@@ -1,11 +1,10 @@
 pub mod mysql_repos;
-pub mod errors;
-pub use errors::*;
+pub mod query_handlers;
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use crate::mysql_repos::MysqlSurveyRepository;
+    use crate::mysql_repos::MysqlSurveyWriteRepository;
     use domain_patterns::collections::Repository;
     use domain_patterns::models::{Entity, AggregateRoot};
     use survey_manager_core::survey::Survey;
@@ -56,7 +55,7 @@ mod tests {
                          created_on BIGINT NOT NULL,
                          survey_data JSON NOT NULL
                      )").unwrap();
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -83,7 +82,7 @@ mod tests {
                          created_on BIGINT NOT NULL,
                          survey_data JSON NOT NULL
                      )").unwrap();
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -111,7 +110,7 @@ mod tests {
                          created_on BIGINT NOT NULL,
                          survey_data JSON NOT NULL
                      )").unwrap();
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let mut survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -153,7 +152,7 @@ mod tests {
                          survey_data JSON NOT NULL
                      )").unwrap();
 
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -188,7 +187,7 @@ mod tests {
                          created_on BIGINT NOT NULL,
                          survey_data JSON NOT NULL
                      )").unwrap();
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let mut survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -216,7 +215,7 @@ mod tests {
                          survey_data JSON NOT NULL
                      )").unwrap();
 
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 
@@ -250,7 +249,7 @@ mod tests {
                          survey_data JSON NOT NULL
                      )").unwrap();
 
-            let mut survey_repo = MysqlSurveyRepository::new(conn);
+            let mut survey_repo = MysqlSurveyWriteRepository::new(conn);
             let survey = create_test_survey();
             survey_repo.insert(&survey).unwrap();
 

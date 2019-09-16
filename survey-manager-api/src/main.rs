@@ -1,16 +1,24 @@
 use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, Result};
-use survey_manager_api::commands::{Pool, handle, handle_async};
+use survey_manager_api::commands::{Pool, handle, handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{SurveyCommands, CreateSurveyCommand, UpdateSurveyCommand};
 use survey_manager_core::app_services::token::*;
 use futures::{IntoFuture, Future};
-use serde_derive::Serialize;
+use serde_derive::{Serialize, Deserialize};
 use dotenv::dotenv;
 use uuid::Uuid;
+use survey_manager_core::app_services::queries::FindSurveyQuery;
+use survey_manager_core::app_services::queries::SurveyQueries::FindAuthorsSurveysQuery;
+use survey_manager_api::queries::handle_queries_async;
 
 #[derive(Serialize)]
 struct Token {
     token: String,
+}
+
+#[derive(Deserialize)]
+pub struct SurveyId {
+    id: String,
 }
 
 fn create_survey(
@@ -19,7 +27,7 @@ fn create_survey(
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
     let create_survey_command: CreateSurveyCommand = dto.into_inner().into();
 
-    handle_async(&pool, create_survey_command.into())
+    handle_command_async(&pool, create_survey_command.into())
         .from_err()
         .and_then(|res| Ok(HttpResponse::Ok().json(res)))
 }
@@ -30,10 +38,25 @@ fn update_survey(
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
     let update_survey_command: UpdateSurveyCommand = dto.into_inner().into();
 
-    handle_async(&pool, update_survey_command.into())
+    handle_command_async(&pool, update_survey_command.into())
         .from_err()
         .and_then(|res| Ok(HttpResponse::Ok().json(res)))
+}
 
+fn find_survey(
+    pool: web::Data<Pool>,
+    params: web::Path<SurveyId>,
+) -> impl Future<Item = HttpResponse, Error = AWError> {
+    let find_survey_query = FindSurveyQuery { id: params.into_inner().id };
+
+    handle_queries_async(&pool, find_survey_query.into())
+        .from_err()
+        .and_then(|res| {
+            let text = if let Some(s) = res { s } else { "".to_string() };
+            Ok(HttpResponse::Ok()
+                .content_type("application/json")
+                .body(text))
+        })
 }
 
 fn get_token(
@@ -59,6 +82,10 @@ fn main() -> std::io::Result<()> {
                 web::resource("/survey")
                     .route(web::post().to_async(create_survey))
                     .route(web::patch().to_async(update_survey)),
+            )
+            .service(
+                web::resource("/survey/{id}")
+                    .route(web::get().to_async(find_survey)),
             )
             .service(
                 web::resource("/token")
