@@ -45,9 +45,7 @@ impl ValueObject<String> for ContentType {
             "spotify" => Ok(()),
             "soundcloud" => Ok(()),
             _ => Err(
-                ValidationError::ContentTypeValidationError {
-                    msg: "That content type is not supported by our system yet.".to_string()
-                }.into()
+                ValidationError::ContentTypeValidationError.into()
             ),
         }
     }

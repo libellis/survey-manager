@@ -45,9 +45,7 @@ impl ValueObject<String> for Category {
             "memes" => Ok(()),
             "funny" => Ok(()),
             _ => Err(
-                ValidationError::CategoryValidationError {
-                    msg: "This is not a valid category.".to_string()
-                }.into()
+                ValidationError::CategoryValidationError.into()
             ),
         }
     }

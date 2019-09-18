@@ -1,4 +1,5 @@
 use snafu::{Snafu, ResultExt, Backtrace, ErrorCompat, ensure};
+use crate::value_objects::Category;
 
 /// ValidationErrors are errors related to failure to validate during creation of a value object.
 #[derive(Debug, Snafu)]
@@ -15,16 +16,13 @@ pub enum ValidationError {
     DescriptionValidationError {
         msg: String,
     },
-    // TODO: Just put error message here and list out valid categories by printing
-    // enum.  Do same for others with enum types.
-    #[snafu(display("Category failed to validate. {}", msg))]
-    CategoryValidationError {
-        msg: String,
-    },
-    #[snafu(display("Content type failed to validate. {}", msg))]
-    ContentTypeValidationError {
-        msg: String,
-    },
+
+    #[snafu(display("Not a valid category."))]
+    CategoryValidationError,
+
+    #[snafu(display("Not a valid content type."))]
+    ContentTypeValidationError,
+
     #[snafu(display("Not a valid question type."))]
     QuestionTypeValidationError,
 }
