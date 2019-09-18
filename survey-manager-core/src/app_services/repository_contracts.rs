@@ -7,7 +7,7 @@ use crate::app_services::queries::PageConfig;
 /// whether that's via a REST controller or over gRPC as a proto type etc.
 pub trait SurveyDTOReadRepository {
     /// Error type that likely corresponds to an underlying database error.
-    type Error: 'static + std::error::Error + std::fmt::Display;
+    type Error: 'static + std::error::Error + std::fmt::Display + Send;
 
     /// Returns the SurveyDTO corresponding to the supplied key as an owned type.
     ///

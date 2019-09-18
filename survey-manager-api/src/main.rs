@@ -12,9 +12,11 @@ use survey_manager_api::queries::handle_queries_async;
 use survey_manager_api::utils::token_from_req;
 use actix_web::error::ErrorUnauthorized;
 use futures::future::err;
+use survey_manager_api::extractors::Token as BearerToken;
 
 const MISSING_TOKEN_STR: &'static str = "You must supply a JWT as a bearer token in the auth headers to access that resource.";
 
+// For grabbing a token from get_token endpoint.
 #[derive(Serialize)]
 struct Token {
     token: String,
@@ -53,12 +55,11 @@ fn update_survey(
 }
 
 fn find_survey(
-    req: web::HttpRequest,
     pool: web::Data<Pool>,
+    token: web::Data<BearerToken>,
     params: web::Path<SurveyId>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    let token = token_from_req(req).unwrap();
-    let Payload{username, ..} = decode_payload(&token);
+    let Payload{username, ..} = decode_payload(&token.into_inner());
 
     let find_survey_query = FindSurveyQuery {
         id: params.into_inner().id,
@@ -76,13 +77,10 @@ fn find_survey(
 }
 
 fn find_authors_surveys(
-    req: web::HttpRequest,
+    token: web::Data<BearerToken>,
     pool: web::Data<Pool>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    // TODO: This will panic if no token found.  Fix later, let's keep testing our happy path.
-    let token = token_from_req(req).unwrap();
-
-    let Payload{username, ..} = decode_payload(&token);
+    let Payload{username, ..} = decode_payload(&token.into_inner());
     let find_authors_surveys = FindSurveysByAuthorQuery { author: username, page_config: None };
 
     handle_queries_async(&pool, find_authors_surveys.into())

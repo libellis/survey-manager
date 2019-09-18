@@ -25,7 +25,7 @@ pub enum Error {
     /// This might have been a concurrency error, or failure to communicate with the database.
     #[snafu(display("{}", source))]
     RepoFailure {
-        source: Box<dyn std::error::Error>,
+        source: Box<dyn std::error::Error + Send>,
     },
 }
 
