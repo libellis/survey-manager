@@ -21,10 +21,9 @@ pub enum Error {
     #[snafu(display("not authorized"))]
     NotAuthorized,
 
-    // TODO: How do we not lose internal error? Source type is unknown.
-    /// DbFailure conveys to the caller that some kind of error happened on the database level.
+    /// RepoFailure conveys to the caller that some kind of error happened in a repository.
     /// This might have been a concurrency error, or failure to communicate with the database.
-    #[snafu(display("repository failure"))]
+    #[snafu(display("{}", source))]
     RepoFailure {
         source: Box<dyn std::error::Error>,
     },
