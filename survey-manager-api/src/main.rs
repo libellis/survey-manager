@@ -1,4 +1,4 @@
-use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, Result};
+use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, Result, HttpRequest, Either};
 use survey_manager_api::commands::{Pool, handle, handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{SurveyCommands, CreateSurveyCommand, UpdateSurveyCommand};
@@ -7,8 +7,13 @@ use futures::{IntoFuture, Future};
 use serde_derive::{Serialize, Deserialize};
 use dotenv::dotenv;
 use uuid::Uuid;
-use survey_manager_core::app_services::queries::{FindSurveyQuery, FindAuthorsSurveysQuery};
+use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByAuthorQuery};
 use survey_manager_api::queries::handle_queries_async;
+use survey_manager_api::utils::token_from_req;
+use actix_web::error::ErrorUnauthorized;
+use futures::future::err;
+
+const MISSING_TOKEN_STR: &'static str = "You must supply a JWT as a bearer token in the auth headers to access that resource.";
 
 #[derive(Serialize)]
 struct Token {
@@ -48,10 +53,17 @@ fn update_survey(
 }
 
 fn find_survey(
+    req: web::HttpRequest,
     pool: web::Data<Pool>,
     params: web::Path<SurveyId>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    let find_survey_query = FindSurveyQuery { id: params.into_inner().id };
+    let token = token_from_req(req).unwrap();
+    let Payload{username, ..} = decode_payload(&token);
+
+    let find_survey_query = FindSurveyQuery {
+        id: params.into_inner().id,
+        requesting_author: username,
+    };
 
     handle_queries_async(&pool, find_survey_query.into())
         .from_err()
@@ -64,10 +76,14 @@ fn find_survey(
 }
 
 fn find_authors_surveys(
+    req: web::HttpRequest,
     pool: web::Data<Pool>,
-    params: web::Path<Author>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    let find_authors_surveys = FindAuthorsSurveysQuery { author: params.into_inner().author, page_config: None };
+    // TODO: This will panic if no token found.  Fix later, let's keep testing our happy path.
+    let token = token_from_req(req).unwrap();
+
+    let Payload{username, ..} = decode_payload(&token);
+    let find_authors_surveys = FindSurveysByAuthorQuery { author: username, page_config: None };
 
     handle_queries_async(&pool, find_authors_surveys.into())
         .from_err()
@@ -101,15 +117,12 @@ fn main() -> std::io::Result<()> {
             .service(
                 web::resource("/survey")
                     .route(web::post().to_async(create_survey))
-                    .route(web::patch().to_async(update_survey)),
-            )
+                    .route(web::patch().to_async(update_survey))
+                    .route(web::get().to_async(find_authors_surveys)),
+        )
             .service(
                 web::resource("/survey/{id}")
                     .route(web::get().to_async(find_survey)),
-            )
-            .service(
-                web::resource("/{author}/survey")
-                    .route(web::get().to_async(find_authors_surveys)),
             )
             .service(
                 web::resource("/token")

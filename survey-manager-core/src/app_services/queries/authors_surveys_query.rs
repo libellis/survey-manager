@@ -1,7 +1,7 @@
 use domain_patterns::query::Query;
 
 #[derive(Query)]
-pub struct FindAuthorsSurveysQuery {
+pub struct FindSurveysByAuthorQuery {
     pub author: String,
     pub page_config: Option<PageConfig>,
 }

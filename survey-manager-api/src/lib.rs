@@ -8,6 +8,7 @@ pub mod inputs;
 pub mod commands;
 pub mod queries;
 pub mod generate;
+pub mod utils;
 
 #[cfg(test)]
 mod tests {

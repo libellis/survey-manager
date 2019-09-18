@@ -1,10 +1,10 @@
 use domain_patterns::query::Query;
-use crate::app_services::queries::{FindAuthorsSurveysQuery, FindSurveyQuery};
+use crate::app_services::queries::{FindSurveysByAuthorQuery, FindSurveyQuery};
 
 #[derive(Query)]
 pub enum SurveyQueries {
     FindSurveyQuery(FindSurveyQuery),
-    FindAuthorsSurveysQuery(FindAuthorsSurveysQuery),
+    FindAuthorsSurveysQuery(FindSurveysByAuthorQuery),
 }
 
 impl From<FindSurveyQuery> for SurveyQueries {
@@ -13,8 +13,8 @@ impl From<FindSurveyQuery> for SurveyQueries {
     }
 }
 
-impl From<FindAuthorsSurveysQuery> for SurveyQueries {
-    fn from(query: FindAuthorsSurveysQuery) -> Self {
+impl From<FindSurveysByAuthorQuery> for SurveyQueries {
+    fn from(query: FindSurveysByAuthorQuery) -> Self {
         SurveyQueries::FindAuthorsSurveysQuery(query)
     }
 }

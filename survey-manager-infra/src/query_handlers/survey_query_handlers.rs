@@ -1,5 +1,5 @@
 use domain_patterns::query::HandlesQuery;
-use survey_manager_core::app_services::queries::{FindSurveyQuery, FindAuthorsSurveysQuery, SurveyQueries, PageConfig};
+use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByAuthorQuery, SurveyQueries, PageConfig};
 use survey_manager_core::dtos::SurveyDTO;
 
 // TODO: For now this talks to the same model as the write model.  Should probably change this to read from cache like redis.
@@ -25,8 +25,8 @@ impl HandlesQuery<FindSurveyQuery> for MysqlSurveyQueriesHandler {
     fn handle(&mut self, query: FindSurveyQuery) -> Self::Result {
         let survey_result: Option<String> =
             match self.conn.prep_exec(
-                "SELECT survey_data FROM survey WHERE id=?",
-                (query.id,)
+                "SELECT survey_data FROM survey WHERE id=? AND author=?",
+                (query.id, query.requesting_author)
             ) {
                 Ok(mut q_result) => {
                     if let Some(row_result)  = q_result.next() {
@@ -45,11 +45,11 @@ impl HandlesQuery<FindSurveyQuery> for MysqlSurveyQueriesHandler {
     }
 }
 
-impl HandlesQuery<FindAuthorsSurveysQuery> for MysqlSurveyQueriesHandler {
+impl HandlesQuery<FindSurveysByAuthorQuery> for MysqlSurveyQueriesHandler {
     // String in this case resembles a Vec<SurveyDTO> but is just pure json string.
     type Result = Result<Option<String>, mysql::Error>;
 
-    fn handle(&mut self, query: FindAuthorsSurveysQuery) -> Self::Result {
+    fn handle(&mut self, query: FindSurveysByAuthorQuery) -> Self::Result {
         // Default lower and upper bounds in case they aren't supplied in query object.
         let mut lower = 0;
         let mut upper = 20;
@@ -60,8 +60,8 @@ impl HandlesQuery<FindAuthorsSurveysQuery> for MysqlSurveyQueriesHandler {
 
         let survey_results: Option<String> =
             match self.conn.prep_exec(
-                "SELECT survey_data FROM survey LIMIT ?,?",
-                (lower, upper)
+                "SELECT survey_data FROM survey WHERE author=? LIMIT ?,?",
+                (query.author, lower, upper)
             ) {
                 Ok(mut q_result) => {
                     let mut s_dtos = Vec::new();
@@ -88,7 +88,7 @@ impl HandlesQuery<FindAuthorsSurveysQuery> for MysqlSurveyQueriesHandler {
 }
 
 impl HandlesQuery<SurveyQueries> for MysqlSurveyQueriesHandler {
-    // The beautify of using a String for success is that we can coaelesce all query handlers since they
+    // The beautify of using a String for success is that we can coalesce all query handlers since they
     // now all have the same type signature.
     type Result = Result<Option<String>, mysql::Error>;
 
