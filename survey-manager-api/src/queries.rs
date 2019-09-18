@@ -3,7 +3,7 @@ use domain_patterns::query::{HandlesQuery, Query};
 use futures::Future;
 use actix_web::{web, Error as AWError};
 use crate::generate;
-use survey_manager_core::Error;
+use crate::error::Error;
 
 pub type Pool = mysql::Pool;
 pub type Conn = mysql::PooledConn;
@@ -20,7 +20,7 @@ pub fn handle_queries_async(
 fn handle(
     conn: Conn,
     query: SurveyQueries,
-) -> Result<Option<String>, String> {
+) -> Result<Option<String>, Error> {
     generate::query_handler(conn).handle(query)
-        .map_err(|e| format!("{}", e))
+        .map_err(|e| Error::from(e))
 }

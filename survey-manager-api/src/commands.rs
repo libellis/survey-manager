@@ -5,7 +5,7 @@ use survey_manager_core::app_services::commands::{SurveyCommands, CreateSurveyCo
 use domain_patterns::command::Handles;
 use survey_manager_core::survey::Survey;
 use crate::generate::command_handler;
-use survey_manager_core::Error;
+use crate::error::Error;
 use mysql::PooledConn;
 
 pub type Pool = mysql::Pool;
@@ -23,6 +23,8 @@ pub fn handle_command_async(
 pub fn handle(
     conn: PooledConn,
     cmd: SurveyCommands,
-) -> Result<Option<String>, String> {
-    command_handler(conn).handle(cmd).map_err(|e| format!("{}", e))
+) -> Result<Option<String>, Error> {
+    command_handler(conn)
+        .handle(cmd)
+        .map_err(|e| Error::from(e))
 }
