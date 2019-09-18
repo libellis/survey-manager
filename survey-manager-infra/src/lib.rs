@@ -1,5 +1,4 @@
 pub mod mysql_repos;
-pub mod query_handlers;
 pub mod utils;
 
 #[cfg(test)]

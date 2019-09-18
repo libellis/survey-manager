@@ -39,8 +39,6 @@ impl Repository<Survey> for MysqlSurveyWriteRepository {
         Ok(Some(survey_dto.id))
     }
 
-    // TODO: Change to not use prepared statements when we switch to vitess.  Likely do this
-    // when you have a vitess client library built and it's trivial.
     fn get(&mut self, key: &String) -> Result<Option<Survey>, Self::Error> {
         let survey_result: Option<SurveyDTO> =
             match self.conn.prep_exec(
@@ -120,8 +118,6 @@ impl Repository<Survey> for MysqlSurveyWriteRepository {
 
 fn handle_duplicate_key(error: mysql::Error) -> Result<Option<String>, mysql::Error> {
     if let Error::MySqlError(e) = error {
-        // TODO: Make sure this is the right error code for valid primary key column name
-        // in WHERE clause, but id supplied does not exist.
         if e.code == ServerError::ER_DUP_ENTRY as u16 {
             return Ok(None);
         }
