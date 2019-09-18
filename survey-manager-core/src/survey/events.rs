@@ -41,7 +41,7 @@ impl From<&Survey> for SurveyCreatedEvent {
         let questions: Vec<QuestionCreatedEvent> = survey.questions.iter().map(|q| {
             QuestionCreatedEvent {
                 id: q.id.to_string(),
-                question_type: q.question_type.to_string(),
+                question_type: q.kind.to_string(),
                 title: q.title().to_string(),
                 choices: q.choices.iter().map(|c|{
                     let content = if let Some(c) = &c.content {

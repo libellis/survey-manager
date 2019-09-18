@@ -26,7 +26,7 @@ pub struct SurveyDTO {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionDTO {
     pub id: String,
-    pub question_type: String,
+    pub kind: String,
     pub title: String,
     pub choices: Vec<ChoiceDTO>
 }
@@ -68,7 +68,7 @@ impl From<&Question> for QuestionDTO {
 
         QuestionDTO {
             id: q.id().to_string(),
-            question_type: q.question_type().to_string(),
+            kind: q.kind().to_string(),
             title: q.title().to_string(),
             choices,
         }

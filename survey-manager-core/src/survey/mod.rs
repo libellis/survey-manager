@@ -75,7 +75,7 @@ impl Survey {
     fn create_question(new_question: CreateQuestionCommand) -> Result<Question> {
         Ok(Question {
             id: Uuid::new_v4(),
-            question_type: QuestionType::try_from(new_question.question_type)?,
+            kind: QuestionType::try_from(new_question.question_type)?,
             title: Title::try_from(new_question.title)?,
             choices: Self::create_choices(new_question.choices)?,
         })
@@ -200,7 +200,7 @@ impl Survey {
 
     fn change_question_type(&mut self, q_id: &String, new_type: &String) -> Result<()> {
         let question = self.find_question(q_id)?;
-        question.question_type = QuestionType::try_from(new_type.clone())?;
+        question.kind = QuestionType::try_from(new_type.clone())?;
         Ok(())
     }
 
