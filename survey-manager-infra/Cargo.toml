@@ -19,3 +19,8 @@ r2d2_redis = "0.11.0"
 
 [dev-dependencies]
 dotenv = "0.14.1"
+criterion = "0.3.0"
+
+[[bench]]
+name = "infra_benchmark"
+harness = false
