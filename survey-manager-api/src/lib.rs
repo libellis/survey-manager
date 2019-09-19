@@ -7,11 +7,16 @@ extern crate serde_derive;
 #[macro_use]
 extern crate derive_more;
 
+#[macro_use]
+extern crate log;
+
+#[macro_use]
+extern crate lazy_static;
+
 pub mod inputs;
 pub mod commands;
 pub mod queries;
 pub mod generate;
-pub mod utils;
 pub mod extractors;
 pub mod error;
 

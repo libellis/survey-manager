@@ -3,7 +3,6 @@ use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByA
 use survey_manager_core::dtos::{SurveyDTO, SurveyDTOs, ListViewSurveyDTO};
 use survey_manager_core::app_services::repository_contracts::SurveyDTOReadRepository;
 
-// TODO: For now this talks to the same model as the write model.  Should probably change this to read from cache like redis.
 pub struct MysqlSurveyDTOsRepository {
     // A single connection to Mysql.  Handed down from a pool likely.
     conn: mysql::PooledConn,

@@ -1,7 +1,7 @@
 use r2d2_mysql::MysqlConnectionManager;
 use mysql::{OptsBuilder, Opts};
 
-/// Pool type is a simple wrapper over r2d2::Pool<ManagedPgConn> -> use it to pass around your
+/// Pool type is a simple wrapper over r2d2::Pool<MysqlConnectionManager> -> use it to pass around your
 /// pool.
 pub type Pool = r2d2::Pool<MysqlConnectionManager>;
 

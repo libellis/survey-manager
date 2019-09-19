@@ -6,12 +6,12 @@ use uuid::Uuid;
 use std::str::FromStr;
 use crate::value_objects::{Author, Title, Description, Category, QuestionType, ContentType};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SurveyDTOs {
     pub surveys: Vec<ListViewSurveyDTO>
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ListViewSurveyDTO {
     pub id: String,
     pub author: String,

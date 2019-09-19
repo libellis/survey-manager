@@ -1,4 +1,5 @@
 pub mod mysql_repos;
+pub mod cache_repo_decorators;
 pub mod utils;
 
 #[cfg(test)]

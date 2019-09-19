@@ -12,19 +12,16 @@ pub type Pool = mysql::Pool;
 pub type Conn = mysql::PooledConn;
 
 pub fn handle_command_async(
-    pool: &Pool,
     cmd: SurveyCommands,
 ) -> impl Future<Item = Option<String>, Error = AWError> {
-    let pool = pool.clone();
-    web::block(move || handle(pool.get_conn().unwrap(), cmd))
+    web::block(move || handle(cmd))
         .from_err()
 }
 
 pub fn handle(
-    conn: PooledConn,
     cmd: SurveyCommands,
 ) -> Result<Option<String>, Error> {
-    command_handler(conn)
+    command_handler()
         .handle(cmd)
         .map_err(|e| Error::from(e))
 }
