@@ -13,9 +13,10 @@ pub struct MysqlSurveyWriteRepository {
 }
 
 impl MysqlSurveyWriteRepository {
-    pub fn new(conn: mysql::PooledConn) -> MysqlSurveyWriteRepository {
+    pub fn new() -> MysqlSurveyWriteRepository {
+        let pool = super::MYSQL_POOL.clone();
         MysqlSurveyWriteRepository {
-            conn,
+            conn: pool.get_conn().unwrap(),
         }
     }
 }

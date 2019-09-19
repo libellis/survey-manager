@@ -9,9 +9,10 @@ pub struct MysqlSurveyDTOsRepository {
 }
 
 impl MysqlSurveyDTOsRepository {
-    pub fn new(conn: mysql::PooledConn) -> MysqlSurveyDTOsRepository {
+    pub fn new() -> MysqlSurveyDTOsRepository {
+        let pool = super::MYSQL_POOL.clone();
         MysqlSurveyDTOsRepository {
-            conn,
+            conn: pool.get_conn().unwrap(),
         }
     }
 }

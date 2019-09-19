@@ -4,11 +4,6 @@ use futures::Future;
 use actix_web::{web, Error as AWError};
 use crate::generate;
 use crate::error::Error;
-use survey_manager_infra::utils::redis_pool::Pool as RedisPool;
-use survey_manager_infra::utils::redis_pool::Conn as RedisConn;
-
-pub type MysqlPool = mysql::Pool;
-pub type MysqlConn = mysql::PooledConn;
 
 pub fn handle_queries_async(
     query: SurveyQueries,

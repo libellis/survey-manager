@@ -1,6 +1,13 @@
 use survey_manager_core::app_services::repository_contracts::SurveyDTOReadRepository;
-use crate::utils::redis_pool::{Conn, Pool};
+use crate::utils::redis_pool::{Conn, Pool, create_pool};
 use survey_manager_core::dtos::{SurveyDTO, SurveyDTOs};
+
+lazy_static! {
+    static ref REDIS_POOL: Pool = {
+        let cache_url = std::env::var("CACHE_URL").expect("CACHE_URL must be set");
+        create_pool(&cache_url)
+    };
+}
 
 pub struct RedisCacheRepository<T>
     where T: SurveyDTOReadRepository
@@ -13,9 +20,10 @@ pub struct RedisCacheRepository<T>
 impl<T> RedisCacheRepository<T>
     where T: SurveyDTOReadRepository
 {
-    pub fn new(redis_conn: Conn, repo: T) -> RedisCacheRepository<T> {
+    pub fn new(repo: T) -> RedisCacheRepository<T> {
+        let pool = REDIS_POOL.clone();
         RedisCacheRepository {
-            cache: redis_conn,
+            cache: pool.get().unwrap(),
             repo,
         }
     }
