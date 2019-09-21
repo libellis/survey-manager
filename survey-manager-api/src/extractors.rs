@@ -78,37 +78,6 @@ impl FromRequest for Token {
     }
 }
 
-//impl FromRequest for Token
-//{
-//    type Error = Error;
-//    type Future = Result<Self, Error>;
-//    type Config = PathConfig;
-//
-//    #[inline]
-//    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-//        let error_handler = req
-//            .app_data::<Self::Config>()
-//            .map(|c| c.ehandler.clone())
-//            .unwrap_or(None);
-//
-//        de::Deserialize::deserialize(PathDeserializer::new(req.match_info()))
-//            .map(|inner| Path { inner })
-//            .map_err(move |e| {
-//                log::debug!(
-//                    "Failed during Path extractor deserialization. \
-//                     Request path: {:?}",
-//                    req.path()
-//                );
-//                if let Some(error_handler) = error_handler {
-//                    let e = PathError::Deserialize(e);
-//                    (error_handler)(e, req)
-//                } else {
-//                    ErrorNotFound(e)
-//                }
-//            })
-//    }
-//}
-
 #[derive(Clone)]
 pub struct TokenConfig {
     ehandler: Option<Arc<dyn Fn(TokenError, &HttpRequest) -> Error + Send + Sync>>,
