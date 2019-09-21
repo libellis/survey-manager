@@ -62,18 +62,3 @@ impl SurveyIdResponder {
             .body(body)
     }
 }
-
-// Responder - Seems broken for now.  don't know how to make an async responder.
-impl Responder for SurveyIdResponder {
-    type Error = AWError;
-    type Future = Box<dyn Future<Item=HttpResponse, Error=AWError>>;
-
-    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
-        let body = serde_json::to_string(&self).unwrap();
-
-        // Create response and set content type
-        Box::new(Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .body(body)).into_future())
-    }
-}
