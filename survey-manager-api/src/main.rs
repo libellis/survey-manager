@@ -9,12 +9,15 @@ use dotenv::dotenv;
 use uuid::Uuid;
 use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByAuthorQuery};
 use survey_manager_api::queries::{handle_queries_async, handle_queries_async_no_cache};
-use actix_web::error::ErrorUnauthorized;
-use futures::future::err;
 use survey_manager_api::extractors::{Token as BearerToken, token_from_req};
-use survey_manager_infra::mysql_repos::MysqlSurveyDTOsRepository;
+use survey_manager_api::generate;
+use survey_manager_infra::mysql_repos::{MysqlSurveyDTOsRepository, MysqlSurveyWriteRepository};
 use survey_manager_infra::cache_repo_decorators::RedisCacheRepository;
 use survey_manager_core::app_services::repository_contracts::SurveyDTOReadRepository;
+use survey_manager_api::generate::QueryHandler;
+use domain_patterns::query::HandlesQuery;
+use std::sync::{Mutex, Arc};
+use domain_patterns::collections::Repository;
 
 // For grabbing a token from get_token endpoint.
 #[derive(Serialize)]
@@ -122,20 +125,57 @@ fn find_authors_surveys(
         })
 }
 
-fn pure_test_cached() -> Result<HttpResponse, AWError> {
-    let mut mysql_repo = MysqlSurveyDTOsRepository::new();
-    let mut cached_repo = RedisCacheRepository::new(mysql_repo);
+fn pure_test_cached() -> impl Future<Item = HttpResponse, Error = AWError> {
     let author = "test_user".to_string();
     let s_id = "9324f63d-545b-47fb-be7d-f560bb7476ef".to_string();
-    let s_dto = cached_repo.get_survey_for_author(&s_id, &author).unwrap().unwrap();
-    Ok(HttpResponse::Ok().body("test"))
+    web::block(move || {
+        let mut mysql_repo = MysqlSurveyDTOsRepository::new();
+        let mut cached_repo = RedisCacheRepository::new(mysql_repo);
+        cached_repo.get_survey_for_author(&s_id, &author)
+            .map_err(|e| {
+                let error: SMError = RepoFailure {source: Box::new(e)}.into();
+                Error::from(error)
+            })
+    }).from_err().and_then(|_|{
+        Ok(HttpResponse::Ok().body("test"))
+    })
 }
 
-fn pure_test_uncached() -> Result<HttpResponse, AWError> {
-    let mut mysql_repo = MysqlSurveyDTOsRepository::new();
+use survey_manager_api::error::Error;
+use survey_manager_core::Error as SMError;
+
+fn pure_test_uncached(
+) -> impl Future<Item = HttpResponse, Error = AWError> {
     let author = "test_user".to_string();
     let s_id = "9324f63d-545b-47fb-be7d-f560bb7476ef".to_string();
-    let s_dto = mysql_repo.get_survey_for_author(&s_id, &author).unwrap().unwrap();
+    web::block(move || {
+        let mut mysql_repo = MysqlSurveyDTOsRepository::new();
+        mysql_repo.get_survey_for_author(&s_id, &author)
+            .map_err(|e| {
+                let error: SMError = RepoFailure {source: Box::new(e)}.into();
+                Error::from(error)
+            })
+    }).from_err().and_then(|_|{
+        Ok(HttpResponse::Ok().body("test"))
+    })
+}
+
+use domain_patterns::command::Handles;
+use actix_web::middleware::Logger;
+use survey_manager_core::errors::Error::RepoFailure;
+
+fn write_test() -> Result<HttpResponse, AWError> {
+    let mut handler = generate::command_handler();
+    let mut cmd = UpdateSurveyCommand {
+        id: "9324f63d-545b-47fb-be7d-f560bb7476ef".to_string(),
+        author: "test_user".to_string(),
+        title: Some("New test title".to_string()),
+        description: None,
+        category: None,
+        questions: None
+    };
+    let s_id = handler.handle(cmd).unwrap();
+
     Ok(HttpResponse::Ok().body("test"))
 }
 
@@ -173,11 +213,15 @@ fn main() -> std::io::Result<()> {
             )
             .service(
                 web::resource("/pure-test-cached")
-                    .route(web::get().to(pure_test_cached)),
+                    .route(web::get().to_async(pure_test_cached)),
             )
             .service(
                 web::resource("/pure-test")
-                    .route(web::get().to(pure_test_uncached)),
+                    .route(web::get().to_async(pure_test_uncached)),
+            )
+            .service(
+                web::resource("/write-test")
+                    .route(web::get().to(write_test)),
             )
     })
         .bind("127.0.0.1:8080")?

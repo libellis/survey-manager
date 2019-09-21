@@ -5,7 +5,7 @@ use actix_web::{ResponseError, HttpResponse, http};
 // where they weren't defined (we can't implement actix error traits inside survey-manager-core
 // so we wrap them and implement it on our owned type here)
 #[derive(Debug)]
-pub struct Error(SMError);
+pub struct Error(pub SMError);
 
 impl std::error::Error for Error {}
 

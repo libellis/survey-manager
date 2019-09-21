@@ -3,5 +3,6 @@
 members = [
     "survey-manager-core",
     "survey-manager-api",
+    "survey-manager-tower-web",
     "survey-manager-infra",
 ]

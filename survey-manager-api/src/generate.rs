@@ -1,9 +1,9 @@
-use domain_patterns::collections::Repository;
-use survey_manager_core::survey::Survey;
 use survey_manager_infra::mysql_repos::{MysqlSurveyWriteRepository, MysqlSurveyDTOsRepository};
 use survey_manager_core::app_services::commands::SurveyCommandsHandler;
 use survey_manager_core::app_services::queries::SurveyQueriesHandler;
 use survey_manager_infra::cache_repo_decorators::RedisCacheRepository;
+
+pub type QueryHandler = SurveyQueriesHandler<MysqlSurveyDTOsRepository>;
 
 pub fn command_handler() -> SurveyCommandsHandler<MysqlSurveyWriteRepository> {
     let repo = MysqlSurveyWriteRepository::new();

@@ -1,5 +1,5 @@
 use survey_manager_core::app_services::queries::SurveyQueries;
-use domain_patterns::query::{HandlesQuery, Query};
+use domain_patterns::query::HandlesQuery;
 use futures::Future;
 use actix_web::{web, Error as AWError};
 use crate::generate;

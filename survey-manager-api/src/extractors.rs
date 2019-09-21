@@ -3,8 +3,6 @@ use std::sync::Arc;
 use futures::Future;
 use crate::error::TokenError;
 use actix_web::dev::Payload;
-use actix_web::error::ErrorNotFound;
-use survey_manager_core::errors::Error::NotAuthorized;
 
 pub struct Token {
     inner: String

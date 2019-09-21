@@ -9,15 +9,12 @@ domain_patterns = "0.2.141"
 domain_derive = "0.2.135"
 survey-manager-core = { path = "../survey-manager-core" }
 survey-manager-infra = { path = "../survey-manager-infra" }
-uuid = { version = "0.7.4", features = ["v4"] }
 serde = "1.0.99"
 serde_derive = "1.0.99"
 serde_json = "1.0.40"
-chrono = "0.4.9"
 jsonwebtoken = "6.0.1"
 actix-web = "1.0.7"
 futures = "0.1.29"
 dotenv = "0.14.1"
 derive_more = "0.15.0"
-env_logger = "0.6.2"
-log = "0.4.8"
+uuid = "0.7.4"

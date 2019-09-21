@@ -1,8 +1,7 @@
 use actix_web::{web, Error as AWError};
-use futures::{Future, IntoFuture};
-use survey_manager_core::app_services::commands::{SurveyCommands, CreateSurveyCommand};
+use futures::Future;
+use survey_manager_core::app_services::commands::SurveyCommands;
 use domain_patterns::command::Handles;
-use survey_manager_core::survey::Survey;
 use crate::generate::command_handler;
 use crate::error::Error;
 
