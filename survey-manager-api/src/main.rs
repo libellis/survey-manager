@@ -12,7 +12,7 @@ use survey_manager_api::queries::{handle_queries_async};
 use survey_manager_api::extractors::{Token as BearerToken};
 use std::convert::TryInto;
 use survey_manager_api::error::{Error, TokenError};
-use survey_manager_api::responders::{HttpMethod, SurveyIdResponder};
+use survey_manager_api::responders::{HttpMethod, SurveyIdResponder, GetSurveyResponder};
 use survey_manager_api::error::TokenError::TokenExpired;
 
 // For grabbing a token from get_token endpoint.
@@ -62,23 +62,22 @@ fn find_survey(
     token: BearerToken,
     params: web::Path<SurveyId>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
+    let id = params.into_inner().id;
+
     decode_payload(&token.into_inner())
         .map_err(|_| TokenError::TokenExpired)
         .into_future()
         .from_err()
         .and_then(|Payload{username, ..}| {
             let find_survey_query = FindSurveyQuery {
-                id: params.into_inner().id,
+                id: id.clone(),
                 requesting_author: username,
             };
 
             handle_queries_async(find_survey_query.into())
                 .from_err()
                 .and_then(|res| {
-                    let text = if let Some(s) = res { s } else { "".to_string() };
-                    Ok(HttpResponse::Ok()
-                        .content_type("application/json")
-                        .body(text))
+                    GetSurveyResponder::new(res, id).respond()
                 })
         })
 }
@@ -96,10 +95,9 @@ fn find_authors_surveys(
             handle_queries_async(find_authors_surveys.into())
                 .from_err()
                 .and_then(|res| {
-                    let text = if let Some(s) = res { s } else { "".to_string() };
                     Ok(HttpResponse::Ok()
                         .content_type("application/json")
-                        .body(text))
+                        .body(res))
                 })
         })
 }
