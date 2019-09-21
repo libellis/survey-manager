@@ -115,7 +115,6 @@ pub fn token_from_req(req: &HttpRequest) -> Option<String> {
         if let Some(identifier) = token_iterator.next() {
             if identifier != "Bearer" { return None; }
 
-            // safe to unwrap because we've confirmed first option is success.
             if let Some(token) = token_iterator.next() {
                 return Some(token.to_string())
             }
