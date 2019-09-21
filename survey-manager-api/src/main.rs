@@ -1,4 +1,4 @@
-use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result};
+use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result, Responder};
 use survey_manager_api::commands::{handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
@@ -11,7 +11,9 @@ use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByA
 use survey_manager_api::queries::{handle_queries_async};
 use survey_manager_api::extractors::{Token as BearerToken};
 use std::convert::TryInto;
-use survey_manager_api::error::Error;
+use survey_manager_api::error::{Error, TokenError};
+use survey_manager_api::responders::{HttpMethod, SurveyIdResponder};
+use survey_manager_api::error::TokenError::TokenExpired;
 
 // For grabbing a token from get_token endpoint.
 #[derive(Serialize)]
@@ -33,7 +35,11 @@ fn create_survey(
         .and_then(|cmd: CreateSurveyCommand| {
             handle_command_async(cmd.into())
                 .from_err()
-                .and_then(|res| Ok(HttpResponse::Ok().json(res)))
+                .and_then(|res| {
+                    // TODO: Assuming we always get back an id, otherwise we likely would have errored so
+                    // safe to unwrap.  Check if this is actually true.
+                    SurveyIdResponder::new(res.unwrap()).respond()
+                })
         })
 }
 
@@ -46,7 +52,9 @@ fn update_survey(
         .and_then(|cmd: UpdateSurveyCommand| {
             handle_command_async(cmd.into())
                 .from_err()
-                .and_then(|res| Ok(HttpResponse::Ok().json(res)))
+                .and_then(|res| {
+                    SurveyIdResponder::new(res.unwrap()).respond()
+                })
         })
 }
 
@@ -55,7 +63,7 @@ fn find_survey(
     params: web::Path<SurveyId>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
     decode_payload(&token.into_inner())
-        .map_err(|e| Error::from(e))
+        .map_err(|_| TokenError::TokenExpired)
         .into_future()
         .from_err()
         .and_then(|Payload{username, ..}| {
@@ -79,7 +87,7 @@ fn find_authors_surveys(
     token: BearerToken,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
     decode_payload(&token.into_inner())
-        .map_err(|e| Error::from(e))
+        .map_err(|_| TokenError::TokenExpired)
         .into_future()
         .from_err()
         .and_then(|Payload{username, ..}| {

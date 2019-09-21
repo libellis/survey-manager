@@ -2,7 +2,7 @@ use serde::Deserialize;
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand, UpdateQuestionCommand, UpdateChoiceCommand};
 use std::convert::{Into, TryInto};
 use survey_manager_core::app_services::decode_payload;
-use crate::error::Error;
+use crate::error::{Error, TokenError};
 
 #[derive(Deserialize)]
 pub struct CreateSurveyDTO {
@@ -28,11 +28,11 @@ pub struct CreateChoiceDTO {
 }
 
 impl TryInto<CreateSurveyCommand> for CreateSurveyDTO {
-    type Error = Error;
+    type Error = TokenError;
 
     fn try_into(self) -> Result<CreateSurveyCommand, Self::Error> {
         let author = decode_payload(&self.token)
-            .map_err(|e| Error::from(e))?
+            .map_err(|_| TokenError::TokenExpired )?
             .username;
 
         let questions: Vec<CreateQuestionCommand> = self.questions
@@ -104,11 +104,11 @@ pub struct UpdateChoiceDTO {
 }
 
 impl TryInto<UpdateSurveyCommand> for UpdateSurveyDTO {
-    type Error = Error;
+    type Error = TokenError;
 
     fn try_into(self) -> Result<UpdateSurveyCommand, Self::Error> {
         let author = decode_payload(&self.token)
-            .map_err(|e| Error::from(e))?
+            .map_err(|_| TokenError::TokenExpired )?
             .username;
 
         let questions = if let Some(q) = self.questions {

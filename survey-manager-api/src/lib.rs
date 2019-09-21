@@ -9,6 +9,7 @@ pub mod commands;
 pub mod queries;
 pub mod generate;
 pub mod extractors;
+pub mod responders;
 pub mod error;
 
 #[cfg(test)]

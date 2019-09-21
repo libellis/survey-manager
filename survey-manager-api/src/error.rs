@@ -50,6 +50,9 @@ impl From<SMError> for Error {
 pub enum TokenError {
     #[display(fmt = "Missing bearer token from headers.")]
     MissingBearer,
+
+    #[display(fmt = "Token has expired.")]
+    TokenExpired,
 }
 
 
@@ -81,12 +84,18 @@ impl ResponseError for TokenError {
             TokenError::MissingBearer => {
                 HttpResponse::new(http::StatusCode::BAD_REQUEST)
             }
+            TokenError::TokenExpired => {
+                HttpResponse::new(http::StatusCode::UNAUTHORIZED)
+            }
         }
     }
     fn render_response(&self) -> HttpResponse {
         match *self {
             TokenError::MissingBearer => {
                 HttpResponseBuilder::new(http::StatusCode::BAD_REQUEST).json(ErrorJson::from(self))
+            }
+            TokenError::TokenExpired => {
+                HttpResponseBuilder::new(http::StatusCode::UNAUTHORIZED).json(ErrorJson::from(self))
             }
         }
     }
