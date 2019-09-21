@@ -3,8 +3,6 @@ use survey_manager_core::app_services::commands::SurveyCommandsHandler;
 use survey_manager_core::app_services::queries::SurveyQueriesHandler;
 use survey_manager_infra::cache_repo_decorators::RedisCacheRepository;
 
-pub type QueryHandler = SurveyQueriesHandler<MysqlSurveyDTOsRepository>;
-
 pub fn command_handler() -> SurveyCommandsHandler<MysqlSurveyWriteRepository> {
     let repo = MysqlSurveyWriteRepository::new();
     SurveyCommandsHandler::new(repo)
@@ -15,9 +13,4 @@ pub fn query_handler() -> SurveyQueriesHandler<RedisCacheRepository<MysqlSurveyD
     let primary_repo = MysqlSurveyDTOsRepository::new();
     let cache_enhanced_repo = RedisCacheRepository::new(primary_repo);
     SurveyQueriesHandler::new(cache_enhanced_repo)
-}
-
-pub fn query_handler_no_cache() -> SurveyQueriesHandler<MysqlSurveyDTOsRepository> {
-    let primary_repo = MysqlSurveyDTOsRepository::new();
-    SurveyQueriesHandler::new(primary_repo)
 }

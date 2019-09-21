@@ -1,6 +1,5 @@
 use actix_web::{FromRequest, HttpRequest, Error, http::header};
 use std::sync::Arc;
-use futures::Future;
 use crate::error::TokenError;
 use actix_web::dev::Payload;
 

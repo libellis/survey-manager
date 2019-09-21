@@ -1,7 +1,8 @@
 use serde::Deserialize;
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand, UpdateQuestionCommand, UpdateChoiceCommand};
-use std::convert::Into;
+use std::convert::{Into, TryInto};
 use survey_manager_core::app_services::decode_payload;
+use crate::error::Error;
 
 #[derive(Deserialize)]
 pub struct CreateSurveyDTO {
@@ -26,9 +27,13 @@ pub struct CreateChoiceDTO {
     pub title: String,
 }
 
-impl Into<CreateSurveyCommand> for CreateSurveyDTO {
-    fn into(self) -> CreateSurveyCommand {
-        let author = decode_payload(&self.token).username;
+impl TryInto<CreateSurveyCommand> for CreateSurveyDTO {
+    type Error = Error;
+
+    fn try_into(self) -> Result<CreateSurveyCommand, Self::Error> {
+        let author = decode_payload(&self.token)
+            .map_err(|e| Error::from(e))?
+            .username;
 
         let questions: Vec<CreateQuestionCommand> = self.questions
             .into_iter()
@@ -36,13 +41,13 @@ impl Into<CreateSurveyCommand> for CreateSurveyDTO {
                 q.into()
             }).collect();
 
-        CreateSurveyCommand {
+        Ok(CreateSurveyCommand {
             author,
             title: self.title,
             description: self.description,
             category: self.category,
             questions,
-        }
+        })
     }
 }
 
@@ -98,9 +103,13 @@ pub struct UpdateChoiceDTO {
     pub title: Option<String>,
 }
 
-impl Into<UpdateSurveyCommand> for UpdateSurveyDTO {
-    fn into(self) -> UpdateSurveyCommand {
-        let author = decode_payload(&self.token).username;
+impl TryInto<UpdateSurveyCommand> for UpdateSurveyDTO {
+    type Error = Error;
+
+    fn try_into(self) -> Result<UpdateSurveyCommand, Self::Error> {
+        let author = decode_payload(&self.token)
+            .map_err(|e| Error::from(e))?
+            .username;
 
         let questions = if let Some(q) = self.questions {
             Some(q.into_iter()
@@ -111,14 +120,14 @@ impl Into<UpdateSurveyCommand> for UpdateSurveyDTO {
             None
         };
 
-        UpdateSurveyCommand {
+        Ok(UpdateSurveyCommand {
             id: self.id,
             author,
             title: self.title,
             description: self.description,
             category: self.category,
             questions,
-        }
+        })
     }
 }
 

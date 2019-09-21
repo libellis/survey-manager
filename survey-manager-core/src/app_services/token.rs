@@ -1,5 +1,6 @@
 use jsonwebtoken::{encode, decode, Header, Validation};
 use chrono::Utc;
+use crate::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Payload {
@@ -20,7 +21,8 @@ pub fn create_token(username: String, user_id: String) -> String {
     encode(&Header::default(), &new_payload, "testkey".as_ref()).unwrap()
 }
 
-pub fn decode_payload(token: &str) -> Payload {
-    let token_data = decode::<Payload>(token, b"testkey", &Validation::default()).unwrap();
-    token_data.claims
+pub fn decode_payload(token: &str) -> Result<Payload, Error> {
+    let token_data = decode::<Payload>(token, b"testkey", &Validation::default())
+        .map_err(|e| Error::NotAuthorized)?;
+    Ok(token_data.claims)
 }

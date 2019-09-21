@@ -1,5 +1,6 @@
 use survey_manager_core::Error as SMError;
 use actix_web::{ResponseError, HttpResponse, http};
+use actix_web::dev::HttpResponseBuilder;
 
 // We create this here because Rust's orphan rules won't let us impl traits in crates/modules
 // where they weren't defined (we can't implement actix error traits inside survey-manager-core
@@ -26,6 +27,17 @@ impl ResponseError for Error {
             SMError::NotAuthorized => HttpResponse::new(http::StatusCode::FORBIDDEN),
         }
     }
+    fn render_response(&self) -> HttpResponse {
+        let error_struct = ErrorJson::from(self);
+        match (*self).0 {
+            SMError::RepoFailure {..} => {
+                HttpResponseBuilder::new(http::StatusCode::INTERNAL_SERVER_ERROR).json(error_struct)
+            }
+            SMError::ValidationError {..} => HttpResponseBuilder::new(http::StatusCode::UNPROCESSABLE_ENTITY).json(error_struct),
+            SMError::ResourceNotFound {..} => HttpResponseBuilder::new(http::StatusCode::NOT_FOUND).json(error_struct),
+            SMError::NotAuthorized => HttpResponseBuilder::new(http::StatusCode::FORBIDDEN).json(error_struct),
+        }
+    }
 }
 
 impl From<SMError> for Error {
@@ -36,8 +48,30 @@ impl From<SMError> for Error {
 
 #[derive(Debug, Display, From)]
 pub enum TokenError {
-    #[display(fmt = "Missing Bearer Token")]
+    #[display(fmt = "Missing bearer token from headers.")]
     MissingBearer,
+}
+
+
+#[derive(Serialize)]
+pub struct ErrorJson {
+    error: String,
+}
+
+impl From<&TokenError> for ErrorJson {
+    fn from(err: &TokenError) -> Self {
+        ErrorJson {
+            error: format!("{}", err),
+        }
+    }
+}
+
+impl From<&Error> for ErrorJson {
+    fn from(err: &Error) -> Self {
+        ErrorJson {
+            error: format!("{}", err),
+        }
+    }
 }
 
 /// Return `BadRequest` for `TokenError` if missing Bearer Token.
@@ -46,6 +80,13 @@ impl ResponseError for TokenError {
         match *self {
             TokenError::MissingBearer => {
                 HttpResponse::new(http::StatusCode::BAD_REQUEST)
+            }
+        }
+    }
+    fn render_response(&self) -> HttpResponse {
+        match *self {
+            TokenError::MissingBearer => {
+                HttpResponseBuilder::new(http::StatusCode::BAD_REQUEST).json(ErrorJson::from(self))
             }
         }
     }

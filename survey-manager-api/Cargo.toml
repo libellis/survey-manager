@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 domain_patterns = "0.2.141"
-domain_derive = "0.2.135"
 survey-manager-core = { path = "../survey-manager-core" }
 survey-manager-infra = { path = "../survey-manager-infra" }
 serde = "1.0.99"
