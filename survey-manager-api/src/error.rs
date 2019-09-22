@@ -1,6 +1,7 @@
 use survey_manager_core::Error as SMError;
 use actix_web::{ResponseError, HttpResponse, http};
 use actix_web::dev::HttpResponseBuilder;
+use actix_web::error::BlockingError;
 
 // We create this here because Rust's orphan rules won't let us impl traits in crates/modules
 // where they weren't defined (we can't implement actix error traits inside survey-manager-core
@@ -47,6 +48,15 @@ impl ResponseError for CoreError {
             SMError::NotAuthorized => HttpResponseBuilder::new(http::StatusCode::FORBIDDEN).json(error_struct),
             SMError::UnknownFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
             SMError::ConcurrencyFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    }
+}
+
+impl From<BlockingError<SMError>> for CoreError {
+    fn from(blocking_err: BlockingError<SMError>) -> Self {
+        match blocking_err {
+            BlockingError::Error(e) => CoreError(e),
+            _ => CoreError::thread_fail(),
         }
     }
 }
@@ -102,6 +112,16 @@ impl ResponseError for TokenError {
             TokenError::TokenExpired => {
                 HttpResponseBuilder::new(http::StatusCode::UNAUTHORIZED).json(ErrorJson::from(self))
             }
+        }
+    }
+}
+
+impl From<BlockingError<TokenError>> for TokenError {
+    fn from(blocking_err: BlockingError<TokenError>) -> Self {
+        match blocking_err {
+            BlockingError::Error(e) => e,
+            // TODO: Swap with 500 error.
+            BlockingError::Canceled => TokenError::TokenExpired,
         }
     }
 }

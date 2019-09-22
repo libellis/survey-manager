@@ -9,46 +9,25 @@ use std::convert::TryInto;
 
 pub fn decode_payload_async(
     token: String,
-) -> impl Future<Item = Payload, Error = AWError> {
-    web::block(move || decode_payload(&token) )
-        .map_err(|e| {
-            match e {
-                BlockingError::Error(_) => TokenError::TokenExpired,
-                // TODO: Replace with thread blocking error designed for api crate.
-                _ => TokenError::TokenExpired,
-            }
-        })
+) -> impl Future<Item = Payload, Error = TokenError> {
+    web::block(move || decode_payload(&token).map_err(|_| TokenError::TokenExpired) )
         .from_err()
 }
 
 pub fn try_into_create_cmd_async(
     dto: CreateSurveyDTO,
-) -> impl Future<Item = CreateSurveyCommand, Error = AWError> {
+) -> impl Future<Item = CreateSurveyCommand, Error = TokenError> {
     web::block(move || {
         dto.try_into()
     })
-        .map_err(|e| {
-            match e {
-                BlockingError::Error(e) => TokenError::TokenExpired,
-                // TODO: Replace with thread blocking error designed for api crate.
-                _ => TokenError::TokenExpired,
-            }
-        })
         .from_err()
 }
 
 pub fn try_into_update_cmd_async(
     dto: UpdateSurveyDTO,
-) -> impl Future<Item = UpdateSurveyCommand, Error = AWError> {
+) -> impl Future<Item = UpdateSurveyCommand, Error = TokenError> {
     web::block(move || {
         dto.try_into()
     })
-        .map_err(|e| {
-            match e {
-                BlockingError::Error(e) => TokenError::TokenExpired,
-                // TODO: Replace with thread blocking error designed for api crate.
-                _ => TokenError::TokenExpired,
-            }
-        })
         .from_err()
 }

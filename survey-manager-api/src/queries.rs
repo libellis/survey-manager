@@ -8,13 +8,7 @@ use actix_web::error::BlockingError;
 
 pub fn handle_queries_async(
     query: SurveyQueries,
-) -> impl Future<Item = String, Error = AWError> {
+) -> impl Future<Item = String, Error = CoreError> {
     web::block(move || generate::query_handler().handle(query) )
-        .map_err(|e| {
-            match e {
-                BlockingError::Error(e) => CoreError(e),
-                _ => CoreError::thread_fail(),
-            }
-        })
         .from_err()
 }

@@ -1,22 +1,16 @@
-use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result, Responder, middleware};
+use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result};
 use survey_manager_api::commands::{handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
 use survey_manager_core::app_services::token::*;
-use futures::{IntoFuture, Future};
+use futures::Future;
 use serde_derive::{Serialize, Deserialize};
 use dotenv::dotenv;
 use uuid::Uuid;
 use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByAuthorQuery};
 use survey_manager_api::queries::{handle_queries_async};
 use survey_manager_api::extractors::{Token as BearerToken};
-use std::convert::TryInto;
-use survey_manager_api::error::{CoreError, TokenError};
-use survey_manager_api::responders::{HttpMethod, SurveyIdResponder, GetSurveyResponder};
-use actix_web::middleware::Logger;
-use survey_manager_api::generate;
-use domain_patterns::query::HandlesQuery;
-use actix_web::error::BlockingError;
+use survey_manager_api::responders::{SurveyIdResponder, GetSurveyResponder};
 use survey_manager_api::async_utils::{decode_payload_async, try_into_create_cmd_async, try_into_update_cmd_async};
 
 // For grabbing a token from get_token endpoint.
@@ -39,8 +33,6 @@ fn create_survey(
             handle_command_async(cmd.into())
                 .from_err()
                 .and_then(move |res| {
-                    // TODO: Assuming we always get back an id, otherwise we likely would have errored so
-                    // safe to unwrap.  Check if this is actually true.
                     SurveyIdResponder::new(res).respond()
                 })
         })
@@ -77,11 +69,7 @@ fn find_survey(
             handle_queries_async(find_survey_query.into())
                 .from_err()
                 .and_then(move |res| {
-                    //HATEOAS Support - SLOW
                     Ok(GetSurveyResponder::new(res, id).respond())
-//                    Ok(HttpResponse::Ok()
-//                        .content_type("application/json")
-//                        .body(res))
                 })
         })
 }
