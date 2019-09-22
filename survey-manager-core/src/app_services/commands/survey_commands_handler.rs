@@ -1,6 +1,6 @@
 use domain_patterns::collections::Repository;
 use crate::Error;
-use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure};
+use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure, ConcurrencyFailure};
 use crate::errors::Result;
 use domain_patterns::command::Handles;
 use snafu::ResultExt;
@@ -26,22 +26,24 @@ impl<T> SurveyCommandsHandler<T> where
 }
 
 impl<T: Repository<Survey>> Handles<CreateSurveyCommand> for SurveyCommandsHandler<T> {
-    type Result = Result<Option<String>>;
+    type Result = Result<String>;
 
-    fn handle(&mut self, msg: CreateSurveyCommand) -> Result<Option<String>> {
+    fn handle(&mut self, msg: CreateSurveyCommand) -> Result<String> {
         let new_survey = Survey::new(&msg)?;
 
         let s_id = self.repo.insert(&new_survey)
             .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
-        Ok(s_id)
+        // Safe to unwrap.  If we had a duplicate key error, that's a database error and would
+        // be returned above in the map err
+        Ok(s_id.unwrap())
     }
 }
 
 impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandler<T> {
-    type Result = Result<Option<String>>;
+    type Result = Result<String>;
 
-    fn handle(&mut self, msg: UpdateSurveyCommand) -> Result<Option<String>> {
+    fn handle(&mut self, msg: UpdateSurveyCommand) -> Result<String> {
         let mut survey = self.repo.get(&msg.id)
             .map_err(|e| RepoFailure { source: Box::new(e) })?
             .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
@@ -55,14 +57,24 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
         let s_id = self.repo.update(&survey)
             .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
-        Ok(s_id)
+        if let Some(s) = s_id {
+            return Ok(s);
+        }
+
+        // If we got here then repo.update returned None.  This would only happen if there was no valid
+        // survey to update, which could only have happened if the survey was deleted between the time
+        // that we retrieved it with repo.get, and updated it with repo.update. Any other database errors
+        // would have been returned inside the mapped RepoFailure error on the update.
+        Err(
+            Error::ConcurrencyFailure
+        )
     }
 }
 
 impl<T: Repository<Survey>> Handles<SurveyCommands> for SurveyCommandsHandler<T> {
-    type Result = Result<Option<String>>;
+    type Result = Result<String>;
 
-    fn handle(&mut self, msg: SurveyCommands) -> Result<Option<String>> {
+    fn handle(&mut self, msg: SurveyCommands) -> Result<String> {
         match msg {
             SurveyCommands::CreateSurveyCommand(cmd) => self.handle(cmd),
             SurveyCommands::UpdateSurveyCommand(cmd) => self.handle(cmd),

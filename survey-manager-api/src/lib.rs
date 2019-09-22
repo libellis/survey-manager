@@ -10,6 +10,7 @@ pub mod queries;
 pub mod generate;
 pub mod extractors;
 pub mod responders;
+pub mod async_utils;
 pub mod error;
 
 #[cfg(test)]

@@ -5,18 +5,25 @@ use actix_web::dev::HttpResponseBuilder;
 // We create this here because Rust's orphan rules won't let us impl traits in crates/modules
 // where they weren't defined (we can't implement actix error traits inside survey-manager-core
 // so we wrap them and implement it on our owned type here)
-#[derive(Debug)]
-pub struct Error(pub SMError);
+#[derive(Debug, From)]
+pub struct CoreError(pub SMError);
 
-impl std::error::Error for Error {}
+impl std::error::Error for CoreError {}
 
-impl std::fmt::Display for Error {
+impl std::fmt::Display for CoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
     }
 }
 
-impl ResponseError for Error {
+impl CoreError {
+    // Empty for match arms - placeholder for now.  Make an unknown error type.
+    pub fn thread_fail() -> CoreError {
+        CoreError(SMError::UnknownFailure)
+    }
+}
+
+impl ResponseError for CoreError {
     fn error_response(&self) -> HttpResponse {
         match (*self).0 {
             SMError::RepoFailure {..} => {
@@ -25,6 +32,8 @@ impl ResponseError for Error {
             SMError::ValidationError {..} => HttpResponse::new(http::StatusCode::UNPROCESSABLE_ENTITY),
             SMError::ResourceNotFound {..} => HttpResponse::new(http::StatusCode::NOT_FOUND),
             SMError::NotAuthorized => HttpResponse::new(http::StatusCode::FORBIDDEN),
+            SMError::UnknownFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
+            SMError::ConcurrencyFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
         }
     }
     fn render_response(&self) -> HttpResponse {
@@ -36,13 +45,9 @@ impl ResponseError for Error {
             SMError::ValidationError {..} => HttpResponseBuilder::new(http::StatusCode::UNPROCESSABLE_ENTITY).json(error_struct),
             SMError::ResourceNotFound {..} => HttpResponseBuilder::new(http::StatusCode::NOT_FOUND).json(error_struct),
             SMError::NotAuthorized => HttpResponseBuilder::new(http::StatusCode::FORBIDDEN).json(error_struct),
+            SMError::UnknownFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
+            SMError::ConcurrencyFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
         }
-    }
-}
-
-impl From<SMError> for Error {
-    fn from(error: SMError) -> Self {
-        Error(error)
     }
 }
 
@@ -69,8 +74,8 @@ impl From<&TokenError> for ErrorJson {
     }
 }
 
-impl From<&Error> for ErrorJson {
-    fn from(err: &Error) -> Self {
+impl From<&CoreError> for ErrorJson {
+    fn from(err: &CoreError) -> Self {
         ErrorJson {
             error: format!("{}", err),
         }

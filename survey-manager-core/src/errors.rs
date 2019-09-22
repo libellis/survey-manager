@@ -21,6 +21,14 @@ pub enum Error {
     #[snafu(display("not authorized"))]
     NotAuthorized,
 
+    /// NotAuthorized conveys that the caller is not authorized to commit the action.
+    #[snafu(display("unknown failure occurred"))]
+    UnknownFailure,
+
+    /// NotAuthorized conveys that the caller is not authorized to commit the action.
+    #[snafu(display("operation failed due to a concurrency error."))]
+    ConcurrencyFailure,
+
     /// RepoFailure conveys to the caller that some kind of error happened in a repository.
     /// This might have been a concurrency error, or failure to communicate with the database.
     #[snafu(display("{}", source))]

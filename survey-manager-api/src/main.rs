@@ -1,4 +1,4 @@
-use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result, Responder};
+use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result, Responder, middleware};
 use survey_manager_api::commands::{handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
@@ -11,9 +11,13 @@ use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByA
 use survey_manager_api::queries::{handle_queries_async};
 use survey_manager_api::extractors::{Token as BearerToken};
 use std::convert::TryInto;
-use survey_manager_api::error::{Error, TokenError};
+use survey_manager_api::error::{CoreError, TokenError};
 use survey_manager_api::responders::{HttpMethod, SurveyIdResponder, GetSurveyResponder};
-use survey_manager_api::error::TokenError::TokenExpired;
+use actix_web::middleware::Logger;
+use survey_manager_api::generate;
+use domain_patterns::query::HandlesQuery;
+use actix_web::error::BlockingError;
+use survey_manager_api::async_utils::{decode_payload_async, try_into_create_cmd_async, try_into_update_cmd_async};
 
 // For grabbing a token from get_token endpoint.
 #[derive(Serialize)]
@@ -29,16 +33,15 @@ pub struct SurveyId {
 fn create_survey(
     dto: web::Json<CreateSurveyDTO>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    dto.into_inner().try_into()
-        .into_future()
+    try_into_create_cmd_async(dto.into_inner())
         .from_err()
-        .and_then(|cmd: CreateSurveyCommand| {
+        .and_then(move |cmd: CreateSurveyCommand| {
             handle_command_async(cmd.into())
                 .from_err()
-                .and_then(|res| {
+                .and_then(move |res| {
                     // TODO: Assuming we always get back an id, otherwise we likely would have errored so
                     // safe to unwrap.  Check if this is actually true.
-                    SurveyIdResponder::new(res.unwrap()).respond()
+                    SurveyIdResponder::new(res).respond()
                 })
         })
 }
@@ -46,14 +49,13 @@ fn create_survey(
 fn update_survey(
     dto: web::Json<UpdateSurveyDTO>,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    dto.into_inner().try_into()
-        .into_future()
+    try_into_update_cmd_async(dto.into_inner())
         .from_err()
-        .and_then(|cmd: UpdateSurveyCommand| {
+        .and_then(move |cmd: UpdateSurveyCommand| {
             handle_command_async(cmd.into())
                 .from_err()
-                .and_then(|res| {
-                    SurveyIdResponder::new(res.unwrap()).respond()
+                .and_then(move |res| {
+                    SurveyIdResponder::new(res).respond()
                 })
         })
 }
@@ -64,11 +66,9 @@ fn find_survey(
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
     let id = params.into_inner().id;
 
-    decode_payload(&token.into_inner())
-        .map_err(|_| TokenError::TokenExpired)
-        .into_future()
+    decode_payload_async(token.into_inner())
         .from_err()
-        .and_then(|Payload{username, ..}| {
+        .and_then(move |Payload{username, ..}| {
             let find_survey_query = FindSurveyQuery {
                 id: id.clone(),
                 requesting_author: username,
@@ -76,8 +76,12 @@ fn find_survey(
 
             handle_queries_async(find_survey_query.into())
                 .from_err()
-                .and_then(|res| {
-                    GetSurveyResponder::new(res, id).respond()
+                .and_then(move |res| {
+                    //HATEOAS Support - SLOW
+                    Ok(GetSurveyResponder::new(res, id).respond())
+//                    Ok(HttpResponse::Ok()
+//                        .content_type("application/json")
+//                        .body(res))
                 })
         })
 }
@@ -85,16 +89,14 @@ fn find_survey(
 fn find_authors_surveys(
     token: BearerToken,
 ) -> impl Future<Item = HttpResponse, Error = AWError> {
-    decode_payload(&token.into_inner())
-        .map_err(|_| TokenError::TokenExpired)
-        .into_future()
+    decode_payload_async(token.into_inner())
         .from_err()
-        .and_then(|Payload{username, ..}| {
+        .and_then(move |Payload{username, ..}| {
             let find_authors_surveys = FindSurveysByAuthorQuery { author: username, page_config: None };
 
             handle_queries_async(find_authors_surveys.into())
                 .from_err()
-                .and_then(|res| {
+                .and_then(move |res| {
                     Ok(HttpResponse::Ok()
                         .content_type("application/json")
                         .body(res))
