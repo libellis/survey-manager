@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::convert::{From, TryFrom};
+use std::convert::From;
 use domain_patterns::models::{Entity, AggregateRoot};
 use crate::survey::{Choice, Survey, Question};
 

@@ -7,39 +7,39 @@ extern crate lazy_static;
 
 #[cfg(test)]
 mod tests {
-    use crate::mysql_repos::MysqlSurveyWriteRepository;
-    use domain_patterns::collections::Repository;
-    use domain_patterns::models::{Entity, AggregateRoot};
-    use survey_manager_core::survey::Survey;
-    use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand};
-    use dotenv::dotenv;
-    use std::env;
-    use std::convert::TryFrom;
-    use survey_manager_core::value_objects::Title;
-
-    fn create_test_survey() -> Survey {
-        let choice = CreateChoiceCommand {
-            content: None,
-            content_type: "youtube".to_string(),
-            title: "test choice title".to_string()
-        };
-
-        let question = CreateQuestionCommand {
-            question_type: "ranked".to_string(),
-            title: "test question title".to_string(),
-            choices: vec![choice]
-        };
-
-        let create_survey_command = CreateSurveyCommand {
-            author: "test_author".to_string(),
-            title: "test survey title".to_string(),
-            description: "test survey description".to_string(),
-            category: "music".to_string(),
-            questions: vec![question]
-        };
-
-        Survey::new(&create_survey_command).unwrap()
-    }
+//    use crate::mysql_repos::MysqlSurveyWriteRepository;
+//    use domain_patterns::collections::Repository;
+//    use domain_patterns::models::{Entity, AggregateRoot};
+//    use survey_manager_core::survey::Survey;
+//    use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand};
+//    use dotenv::dotenv;
+//    use std::env;
+//    use std::convert::TryFrom;
+//    use survey_manager_core::value_objects::Title;
+//
+//    fn create_test_survey() -> Survey {
+//        let choice = CreateChoiceCommand {
+//            content: None,
+//            content_type: "youtube".to_string(),
+//            title: "test choice title".to_string()
+//        };
+//
+//        let question = CreateQuestionCommand {
+//            question_type: "ranked".to_string(),
+//            title: "test question title".to_string(),
+//            choices: vec![choice]
+//        };
+//
+//        let create_survey_command = CreateSurveyCommand {
+//            author: "test_author".to_string(),
+//            title: "test survey title".to_string(),
+//            description: "test survey description".to_string(),
+//            category: "music".to_string(),
+//            questions: vec![question]
+//        };
+//
+//        Survey::new(&create_survey_command).unwrap()
+//    }
 
     // commenting out for now that repos manage their own db connections.  will need to refactor all of these
 //    #[test]

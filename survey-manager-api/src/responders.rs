@@ -1,6 +1,5 @@
-use actix_web::{Error as AWError, HttpRequest, HttpResponse, Responder};
+use actix_web::HttpResponse;
 use serde::Serialize;
-use futures::{Future, IntoFuture};
 
 // IdHateoas allows you to supply an id and the path prefix to generate
 // a Hateoas compliant ref about what a user can do next with the resource

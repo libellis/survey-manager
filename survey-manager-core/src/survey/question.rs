@@ -1,7 +1,7 @@
 use uuid::Uuid;
 use crate::value_objects::{QuestionType, Title};
 use crate::survey::Choice;
-use crate::dtos::{QuestionDTO, ChoiceDTO};
+use crate::dtos::QuestionDTO;
 use std::str::FromStr;
 use std::convert::TryFrom;
 

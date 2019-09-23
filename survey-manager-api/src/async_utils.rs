@@ -1,8 +1,7 @@
 use futures::Future;
 use survey_manager_core::app_services::{Payload, decode_payload};
-use actix_web::{web, Error as AWError};
-use crate::error::{CoreError, TokenError};
-use actix_web::error::BlockingError;
+use actix_web::web;
+use crate::error::TokenError;
 use crate::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
 use std::convert::TryInto;

@@ -1,5 +1,3 @@
-use domain_patterns::query::HandlesQuery;
-use survey_manager_core::app_services::queries::{FindSurveyQuery, FindSurveysByAuthorQuery, SurveyQueries, PageConfig};
 use survey_manager_core::dtos::{SurveyDTO, SurveyDTOs, ListViewSurveyDTO};
 use survey_manager_core::app_services::repository_contracts::SurveyDTOReadRepository;
 
@@ -10,7 +8,7 @@ pub struct MysqlSurveyDTOsRepository {
 
 impl MysqlSurveyDTOsRepository {
     pub fn new() -> MysqlSurveyDTOsRepository {
-        let mut pool = super::MYSQL_POOL.clone();
+        let pool = super::MYSQL_POOL.clone();
         MysqlSurveyDTOsRepository {
             conn: pool.get_conn().unwrap()
         }
@@ -49,7 +47,7 @@ impl SurveyDTOReadRepository for MysqlSurveyDTOsRepository {
                 "SELECT id, author, title, category FROM survey WHERE author=? LIMIT ?,?",
                 (author, lower_bound, upper_bound)
             ) {
-                Ok(mut q_result) => {
+                Ok(q_result) => {
                     let mut surveys = Vec::new();
                     for row_result in q_result {
                         let row = row_result?;

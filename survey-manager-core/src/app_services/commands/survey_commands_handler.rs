@@ -1,5 +1,4 @@
 use domain_patterns::collections::Repository;
-use crate::Error;
 use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure, ConcurrencyFailure};
 use crate::errors::Result;
 use domain_patterns::command::Handles;

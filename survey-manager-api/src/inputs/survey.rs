@@ -2,7 +2,7 @@ use serde::Deserialize;
 use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand, UpdateQuestionCommand, UpdateChoiceCommand};
 use std::convert::{Into, TryInto};
 use survey_manager_core::app_services::decode_payload;
-use crate::error::{CoreError, TokenError};
+use crate::error::TokenError;
 
 #[derive(Deserialize)]
 pub struct CreateSurveyDTO {

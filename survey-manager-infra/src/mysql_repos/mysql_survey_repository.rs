@@ -1,11 +1,10 @@
-use domain_patterns::collections::{Repository, ReadRepository};
+use domain_patterns::collections::Repository;
 use survey_manager_core::survey::Survey;
 use survey_manager_core::dtos::SurveyDTO;
 use domain_patterns::models::{Entity, AggregateRoot};
 use mysql;
 use mysql::Error;
 use mysql::error::ServerError;
-use mysql::from_row;
 
 pub struct MysqlSurveyWriteRepository {
     // A single connection to Mysql.  Handed down from a pool likely.
@@ -70,6 +69,7 @@ impl Repository<Survey> for MysqlSurveyWriteRepository {
     }
 
     // Intentionally leaving this unimplemented.  we don't need it for command side.
+    #[allow(unused)]
     fn get_paged(&mut self, page_num: usize, page_size: usize) -> Result<Option<Vec<Survey>>, Self::Error> {
         unimplemented!()
     }
