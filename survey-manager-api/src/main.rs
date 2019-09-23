@@ -103,6 +103,13 @@ fn get_token(
 fn main() -> std::io::Result<()> {
     dotenv().ok();
 
+    let addr = match std::env::var("SERVER_HOST") {
+        Ok(host) => host,
+        Err(_) => "0.0.0.0:8000".to_string(),
+    };
+
+    println!("Starting http server: {}", &addr);
+
     // Start http server
     HttpServer::new(move || {
         App::new()
@@ -121,6 +128,6 @@ fn main() -> std::io::Result<()> {
                     .route(web::get().to(get_token)),
             )
     })
-        .bind("127.0.0.1:8080")?
+        .bind(&addr)?
         .run()
 }
