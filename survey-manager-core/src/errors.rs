@@ -1,5 +1,4 @@
-use snafu::{Snafu, ResultExt, Backtrace, ErrorCompat, ensure};
-use std::fmt;
+use snafu::Snafu;
 use std::result;
 
 pub type Result<T> = result::Result<T, Error>;

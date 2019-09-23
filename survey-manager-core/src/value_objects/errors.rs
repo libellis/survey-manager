@@ -1,5 +1,4 @@
-use snafu::{Snafu, ResultExt, Backtrace, ErrorCompat, ensure};
-use crate::value_objects::Category;
+use snafu::Snafu;
 
 /// ValidationErrors are errors related to failure to validate during creation of a value object.
 #[derive(Debug, Snafu)]

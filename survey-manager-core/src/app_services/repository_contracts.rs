@@ -1,5 +1,4 @@
 use crate::dtos::{SurveyDTO, SurveyDTOs};
-use crate::app_services::queries::PageConfig;
 
 /// A trait that provides a collection like abstraction over read only database access.
 ///

@@ -1,7 +1,6 @@
 use domain_patterns::command::Command;
 use domain_patterns::message::Message;
 use crate::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
-use std::convert::Into;
 
 #[derive(Clone, Command)]
 pub enum SurveyCommands {

@@ -72,7 +72,6 @@ impl<T> SurveyDTOReadRepository for RedisCacheRepository<T>
                 // so our cache is in sync.
                 // TODO: Set key to be a combination of author and bound arguments.
                 if let Some(surveys) = &s_results {
-                    println!("acquired from mysql.");
                     redis::cmd("SET").arg(author).arg(serde_json::to_string(surveys).unwrap()).execute(&mut *self.cache);
                 };
 

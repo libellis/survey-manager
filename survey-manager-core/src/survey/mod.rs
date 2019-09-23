@@ -10,14 +10,14 @@ pub use events::*;
 use crate::value_objects::{Title, QuestionType, ContentType, Author, Description, Category};
 use uuid::Uuid;
 use domain_patterns::models::{Entity, AggregateRoot};
-use std::convert::TryFrom;
 use chrono::Utc;
 use crate::app_services::commands::*;
 use crate::errors::Result;
 use crate::errors::Error;
 use crate::errors::Error::ResourceNotFound;
-use crate::dtos::{SurveyDTO, QuestionDTO};
+use crate::dtos::SurveyDTO;
 use std::str::FromStr;
+use std::convert::TryFrom;
 
 #[derive(Entity)]
 pub struct Survey {

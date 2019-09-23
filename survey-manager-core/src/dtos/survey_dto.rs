@@ -2,9 +2,6 @@ use serde::{Serialize, Deserialize};
 use std::convert::{From, TryFrom};
 use domain_patterns::models::{Entity, AggregateRoot};
 use crate::survey::{Choice, Survey, Question};
-use uuid::Uuid;
-use std::str::FromStr;
-use crate::value_objects::{Author, Title, Description, Category, QuestionType, ContentType};
 
 #[derive(Serialize, Deserialize)]
 pub struct SurveyDTOs {

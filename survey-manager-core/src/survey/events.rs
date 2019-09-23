@@ -4,8 +4,6 @@ use domain_patterns::message::Message;
 use domain_patterns::models::{Entity, AggregateRoot};
 use uuid::Uuid;
 use crate::survey::Survey;
-use chrono::Utc;
-use crate::app_services::commands::UpdateSurveyCommand;
 
 #[derive(DomainEvent, Serialize)]
 pub struct SurveyCreatedEvent {

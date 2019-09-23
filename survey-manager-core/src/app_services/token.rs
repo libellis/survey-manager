@@ -23,6 +23,6 @@ pub fn create_token(username: String, user_id: String) -> String {
 
 pub fn decode_payload(token: &str) -> Result<Payload, Error> {
     let token_data = decode::<Payload>(token, b"testkey", &Validation::default())
-        .map_err(|e| Error::NotAuthorized)?;
+        .map_err(|_| Error::NotAuthorized)?;
     Ok(token_data.claims)
 }

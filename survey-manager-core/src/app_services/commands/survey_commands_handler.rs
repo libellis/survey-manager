@@ -3,8 +3,6 @@ use crate::Error;
 use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure, ConcurrencyFailure};
 use crate::errors::Result;
 use domain_patterns::command::Handles;
-use snafu::ResultExt;
-
 use crate::survey::Survey;
 use crate::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand, SurveyCommands};
 
@@ -65,9 +63,7 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
         // survey to update, which could only have happened if the survey was deleted between the time
         // that we retrieved it with repo.get, and updated it with repo.update. Any other database errors
         // would have been returned inside the mapped RepoFailure error on the update.
-        Err(
-            Error::ConcurrencyFailure
-        )
+        Err(ConcurrencyFailure)
     }
 }
 
