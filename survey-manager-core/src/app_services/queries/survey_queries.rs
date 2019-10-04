@@ -79,11 +79,11 @@ impl<T> HandlesQuery<FindSurveysByAuthorQuery> for SurveyQueriesHandler<T>
         }
 
         let results = self.repo
-            .get_surveys_by_author(&query.author, lower, upper)
+            .get_surveys_by_author(&query.author)
             .map_err(|e| RepoFailure { source: Box::new(e) })?;
 
         if let Some(surveys) = results {
-            return Ok(serde_json::to_string(&surveys).unwrap());
+            return Ok(serde_json::to_string(&surveys.into_bounded(lower, upper)).unwrap());
         }
 
         Err(
