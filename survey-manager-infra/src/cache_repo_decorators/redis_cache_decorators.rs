@@ -105,8 +105,11 @@ impl<T> RedisSurveyWriteCacheRepository<T>
     }
 
     // Resets cache of all surveys by author_surveys
-    fn invalidate_surveys_cache(&mut self, author: String) {
-        redis::cmd("DEL").arg(format!("{}_surveys", author)).execute(&mut *self.cache);
+    pub fn invalidate_surveys_cache(&mut self, author: String) {
+        let key = format!("{}_surveys", author);
+        redis::cmd("DEL")
+            .arg(&key)
+            .execute(&mut *self.cache);
     }
 }
 
@@ -152,14 +155,20 @@ impl<T> Repository<Survey> for RedisSurveyWriteCacheRepository<T>
     }
 
     // Remove from underlying storage and remove survey from redis cache.
-    // Lastly invalidate the cache for aggregate surveys (all surveys).  That gets refreshed
-    // On read rather than on write.
     fn remove(&mut self, key: &String) -> Result<Option<String>, Self::Error> {
+        let s_id = self.repo.get(key)?;
+        // Invalidate caches before delete.
+        if let Some(s) = s_id {
+            self.invalidate_surveys_cache(s.author().to_string());
+            redis::cmd("DEL")
+                .arg(key)
+                .execute(&mut *self.cache);
+        } else {
+            // No survey so we can just leave here without trying to delete.
+            return Ok(None);
+        }
+
         let maybe_id = self.repo.remove(key)?;
-        redis::cmd("DEL")
-            .arg(key)
-            .execute(&mut *self.cache);
-        self.invalidate_surveys_cache(key.to_string());
         Ok(maybe_id)
     }
 }

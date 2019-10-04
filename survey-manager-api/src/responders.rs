@@ -34,7 +34,7 @@ impl SurveyIdResponder {
         let survey_actions = vec![
             ("getSurvey", HttpMethod::GET),
             ("updateSurvey", HttpMethod::PATCH),
-            ("deleteSurvey", HttpMethod::DELETE),
+            ("removeSurvey", HttpMethod::DELETE),
         ];
 
         let links = survey_actions.into_iter().map(|(action, method)| {

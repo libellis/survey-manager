@@ -69,7 +69,8 @@ fn remove_survey(
             handle_command_async(remove_survey_cmd.into())
                 .from_err()
                 .and_then(move |res| {
-                    Ok(SurveyIdResponder::new(res).respond())
+                    // TODO: Replace with json response.
+                    Ok(HttpResponse::Ok().body("Deleted"))
                 })
         })
 }
@@ -139,12 +140,12 @@ fn main() -> std::io::Result<()> {
                 web::resource("/survey")
                     .route(web::get().to_async(find_authors_surveys))
                     .route(web::post().to_async(create_survey))
-                    .route(web::delete().to_async(remove_survey))
-                    .route(web::patch().to_async(update_survey))
+                    .route(web::patch().to_async(update_survey)),
             )
             .service(
                 web::resource("/survey/{id}")
-                    .route(web::get().to_async(find_survey)),
+                    .route(web::get().to_async(find_survey))
+                    .route(web::delete().to_async(remove_survey)),
             )
             .service(
                 web::resource("/token")

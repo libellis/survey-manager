@@ -72,7 +72,7 @@ impl<T> Handles<RemoveSurveyCommand> for SurveyCommandsHandler<T>
     type Result = Result<String>;
 
     fn handle(&mut self, msg: RemoveSurveyCommand) -> Self::Result {
-        let mut survey = self.repo.get(&msg.id)
+        let survey = self.repo.get(&msg.id)
             .map_err(|e| RepoFailure { source: Box::new(e) })?
             .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
 
