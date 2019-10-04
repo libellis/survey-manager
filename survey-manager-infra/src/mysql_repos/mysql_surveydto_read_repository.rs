@@ -41,11 +41,11 @@ impl SurveyDTOReadRepository for MysqlSurveyDTOsRepository {
         Ok(survey_result)
     }
 
-    fn get_surveys_by_author(&mut self, author: &String, lower_bound: usize, upper_bound: usize) -> Result<Option<SurveyDTOs>, mysql::Error> {
+    fn get_surveys_by_author(&mut self, author: &String) -> Result<Option<SurveyDTOs>, mysql::Error> {
         let survey_results: Option<SurveyDTOs> =
             match self.conn.prep_exec(
-                "SELECT id, author, title, category FROM survey WHERE author=? LIMIT ?,?",
-                (author, lower_bound, upper_bound)
+                "SELECT id, author, title, category FROM survey WHERE author=?",
+                (author,)
             ) {
                 Ok(q_result) => {
                     let mut surveys = Vec::new();

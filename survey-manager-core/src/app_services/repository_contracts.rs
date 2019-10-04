@@ -24,5 +24,5 @@ pub trait SurveyDTOReadRepository {
     /// # Failure case
     ///
     /// If we fail to communicate with the underlying storage, then an error is returned.
-    fn get_surveys_by_author(&mut self, author: &String, lower_bound: usize, upper_bound: usize) -> Result<Option<SurveyDTOs>, Self::Error>;
+    fn get_surveys_by_author(&mut self, author: &String) -> Result<Option<SurveyDTOs>, Self::Error>;
 }
