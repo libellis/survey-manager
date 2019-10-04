@@ -76,7 +76,7 @@ impl<T> Handles<RemoveSurveyCommand> for SurveyCommandsHandler<T>
             .map_err(|e| RepoFailure { source: Box::new(e) })?
             .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
 
-        if !survey.belongs_to(&msg.author) {
+        if !survey.belongs_to(&msg.requesting_author) {
             return Err(NotAuthorized.into());
         }
 
@@ -94,7 +94,7 @@ impl<T: Repository<Survey>> Handles<SurveyCommands> for SurveyCommandsHandler<T>
         match msg {
             SurveyCommands::CreateSurveyCommand(cmd) => self.handle(cmd),
             SurveyCommands::UpdateSurveyCommand(cmd) => self.handle(cmd),
-            SurveyCommands::Remove(cmd) => self.handle(cmd),
+            SurveyCommands::RemoveSurveyCommand(cmd) => self.handle(cmd),
         }
     }
 }

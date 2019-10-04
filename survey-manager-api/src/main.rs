@@ -137,9 +137,10 @@ fn main() -> std::io::Result<()> {
         App::new()
             .service(
                 web::resource("/survey")
+                    .route(web::get().to_async(find_authors_surveys))
                     .route(web::post().to_async(create_survey))
+                    .route(web::delete().to_async(remove_survey))
                     .route(web::patch().to_async(update_survey))
-                    .route(web::get().to_async(find_authors_surveys)),
             )
             .service(
                 web::resource("/survey/{id}")
