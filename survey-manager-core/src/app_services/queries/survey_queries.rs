@@ -55,9 +55,6 @@ impl<T> HandlesQuery<FindSurveyQuery> for SurveyQueriesHandler<T>
             return Ok(serde_json::to_string(&survey).unwrap());
         }
 
-        // TODO: Consider pushing this down a layer - the repo should probably return not found.
-        // Or should that be up to the handler?  Who should decide whether not finding something
-        // is worthy of an error?
         Err(
             Error::ResourceNotFound {
                 resource: format!("survey with id {} by author {}", query.id, query.requesting_author)
