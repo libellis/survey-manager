@@ -1,7 +1,7 @@
 use actix_web::{web, App, Error as AWError, HttpResponse, HttpServer, Result};
 use survey_manager_api::commands::{handle_command_async};
 use survey_manager_api::inputs::{CreateSurveyDTO, UpdateSurveyDTO};
-use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand};
+use survey_manager_core::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand, RemoveSurveyCommand};
 use survey_manager_core::app_services::token::*;
 use futures::Future;
 use serde_derive::{Serialize, Deserialize};
@@ -52,7 +52,27 @@ fn update_survey(
         })
 }
 
-// TODO: Add delete_survey
+fn remove_survey(
+    token: BearerToken,
+    params: web::Path<SurveyId>,
+) -> impl Future<Item = HttpResponse, Error = AWError> {
+    let id = params.into_inner().id;
+
+    decode_payload_async(token.into_inner())
+        .from_err()
+        .and_then(move |Payload{username, ..}| {
+            let remove_survey_cmd = RemoveSurveyCommand {
+                id: id.clone(),
+                requesting_author: username,
+            };
+
+            handle_command_async(remove_survey_cmd.into())
+                .from_err()
+                .and_then(move |res| {
+                    Ok(SurveyIdResponder::new(res).respond())
+                })
+        })
+}
 
 fn find_survey(
     token: BearerToken,

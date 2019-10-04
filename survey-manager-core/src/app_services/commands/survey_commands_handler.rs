@@ -3,7 +3,7 @@ use crate::errors::Error::{ResourceNotFound, NotAuthorized, RepoFailure, Concurr
 use crate::errors::Result;
 use domain_patterns::command::Handles;
 use crate::survey::Survey;
-use crate::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand, SurveyCommands};
+use crate::app_services::commands::{CreateSurveyCommand, UpdateSurveyCommand, SurveyCommands, RemoveSurveyCommand};
 
 
 pub struct SurveyCommandsHandler<T> where
@@ -66,6 +66,27 @@ impl<T: Repository<Survey>> Handles<UpdateSurveyCommand> for SurveyCommandsHandl
     }
 }
 
+impl<T> Handles<RemoveSurveyCommand> for SurveyCommandsHandler<T>
+    where T: Repository<Survey>
+{
+    type Result = Result<String>;
+
+    fn handle(&mut self, msg: RemoveSurveyCommand) -> Self::Result {
+        let mut survey = self.repo.get(&msg.id)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?
+            .ok_or(ResourceNotFound { resource: format!("survey with id {}", &msg.id) })?;
+
+        if !survey.belongs_to(&msg.author) {
+            return Err(NotAuthorized.into());
+        }
+
+        let s_id = self.repo.remove(&msg.id)
+            .map_err(|e| RepoFailure { source: Box::new(e) })?;
+
+        Ok(s_id.unwrap())
+    }
+}
+
 impl<T: Repository<Survey>> Handles<SurveyCommands> for SurveyCommandsHandler<T> {
     type Result = Result<String>;
 
@@ -73,6 +94,7 @@ impl<T: Repository<Survey>> Handles<SurveyCommands> for SurveyCommandsHandler<T>
         match msg {
             SurveyCommands::CreateSurveyCommand(cmd) => self.handle(cmd),
             SurveyCommands::UpdateSurveyCommand(cmd) => self.handle(cmd),
+            SurveyCommands::Remove(cmd) => self.handle(cmd),
         }
     }
 }
