@@ -29,6 +29,10 @@ impl<T> RedisCacheRepository<T>
     }
 }
 
+// TODO: We should consider caching on writes rather than setting up cache invalidation for this bounded context.
+// Surveys are only accessed by their authors so any update on the write side should be what updates the cache.
+// If the cache doesn't exist at all (wiped out, likely because it's on RAM), then we should refresh it as we're
+// doing here.
 impl<T> SurveyDTOReadRepository for RedisCacheRepository<T>
     where T: SurveyDTOReadRepository
 {
