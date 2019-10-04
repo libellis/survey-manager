@@ -52,6 +52,8 @@ fn update_survey(
         })
 }
 
+// TODO: Add delete_survey
+
 fn find_survey(
     token: BearerToken,
     params: web::Path<SurveyId>,
