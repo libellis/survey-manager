@@ -119,8 +119,6 @@ impl From<&Survey> for SurveyDTO {
 }
 
 impl SurveyDTOs {
-
-    // TODO: Probably want this to be a result type, not option.
     pub fn into_bounded(mut self, lower_bound: usize, upper_bound: usize) -> Option<SurveyDTOs> {
         let total = self.surveys.len();
         if lower_bound > total - 1 {
