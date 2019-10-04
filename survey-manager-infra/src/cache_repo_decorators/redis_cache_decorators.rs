@@ -1,6 +1,8 @@
 use survey_manager_core::app_services::repository_contracts::SurveyDTOReadRepository;
 use crate::utils::redis_pool::{Conn, Pool, create_pool};
 use survey_manager_core::dtos::{SurveyDTO, SurveyDTOs};
+use domain_patterns::collections::Repository;
+use survey_manager_core::survey::Survey;
 
 lazy_static! {
     static ref REDIS_POOL: Pool = {
@@ -9,7 +11,7 @@ lazy_static! {
     };
 }
 
-pub struct RedisCacheRepository<T>
+pub struct RedisSurveyReadCacheRepository<T>
     where T: SurveyDTOReadRepository
 {
     // A single connection to Mysql.  Handed down from a pool likely.
@@ -17,23 +19,18 @@ pub struct RedisCacheRepository<T>
     repo: T,
 }
 
-impl<T> RedisCacheRepository<T>
+impl<T> RedisSurveyReadCacheRepository<T>
     where T: SurveyDTOReadRepository
 {
-    pub fn new(repo: T) -> RedisCacheRepository<T> {
-        let pool = REDIS_POOL.clone();
-        RedisCacheRepository {
-            cache: pool.get().unwrap(),
+    pub fn new(repo: T) -> RedisSurveyReadCacheRepository<T> {
+        RedisSurveyReadCacheRepository {
+            cache: REDIS_POOL.clone().get().unwrap(),
             repo,
         }
     }
 }
 
-// TODO: We should consider caching on writes rather than setting up cache invalidation for this bounded context.
-// Surveys are only accessed by their authors so any update on the write side should be what updates the cache.
-// If the cache doesn't exist at all (wiped out, likely because it's on RAM), then we should refresh it as we're
-// doing here.
-impl<T> SurveyDTOReadRepository for RedisCacheRepository<T>
+impl<T> SurveyDTOReadRepository for RedisSurveyReadCacheRepository<T>
     where T: SurveyDTOReadRepository
 {
     type Error = T::Error;
@@ -62,28 +59,107 @@ impl<T> SurveyDTOReadRepository for RedisCacheRepository<T>
         Ok(survey_result)
     }
 
-    fn get_surveys_by_author(&mut self, author: &String, lower_bound: usize, upper_bound: usize) -> Result<Option<SurveyDTOs>, Self::Error> {
+    fn get_surveys_by_author(&mut self, author: &String) -> Result<Option<SurveyDTOs>, Self::Error> {
+        let key = format!("{}_surveys", author);
         let survey_results: Option<SurveyDTOs> =
             // First we try to get it from redis
-            if let Ok(surveys_str) = redis::cmd("GET").arg(author).query::<String>(&mut *self.cache) {
+            if let Ok(surveys_str) = redis::cmd("GET").arg(&key).query::<String>(&mut *self.cache) {
                 // If we succeed we deserialize the json string into the `SurveyDTOs` object.
                 Some(serde_json::from_str(&surveys_str).unwrap())
             } else {
-                // We didn't succeed so we attempt to grab it from the underlying repo we are wrapping (source of truth)
-                let s_results: Option<SurveyDTOs> = self.repo.get_surveys_by_author(author, lower_bound, upper_bound)?;
+                // We didn't succeed so we attempt to grab it from the underlying repo we are wrapping (source of truth).
+                let s_results: Option<SurveyDTOs> = self.repo.get_surveys_by_author(author)?;
 
                 // If that was successful then we take the successful SurveyDTOs, turn them into a string (json) and shove them into redis
                 // so our cache is in sync.
-                // TODO: Set key to be a combination of author and bound arguments.
                 if let Some(surveys) = &s_results {
-                    redis::cmd("SET").arg(author).arg(serde_json::to_string(surveys).unwrap()).execute(&mut *self.cache);
+                    redis::cmd("SET").arg(&key).arg(serde_json::to_string(surveys).unwrap()).execute(&mut *self.cache);
                 };
 
-                // Regardless of success from underlying repo we return the result that came from the underlying storage (which could be None).
                 s_results
             };
 
         // Here we simply wrap it in an Ok so it becomes a Result type
         Ok(survey_results)
+    }
+}
+
+// This wrapper is intended to write to the cache on writes, and otherwise is a pass through on all gets.
+// Gets are for write side of model, so we should always pass through to the real database on those gets.
+pub struct RedisSurveyWriteCacheRepository<T>
+    where T: Repository<Survey>
+{
+    // A single connection to Mysql.  Handed down from a pool likely.
+    cache: Conn,
+    repo: T,
+}
+
+impl<T> RedisSurveyWriteCacheRepository<T>
+    where T: Repository<Survey>
+{
+    pub fn new(repo: T) -> RedisSurveyWriteCacheRepository<T> {
+        RedisSurveyWriteCacheRepository {
+            cache: REDIS_POOL.clone().get().unwrap(),
+            repo,
+        }
+    }
+
+    // Resets cache of all surveys by author_surveys
+    fn invalidate_surveys_cache(&mut self, author: String) {
+        redis::cmd("DEL").arg(format!("{}_surveys", author)).execute(&mut *self.cache);
+    }
+}
+
+impl<T> Repository<Survey> for RedisSurveyWriteCacheRepository<T>
+    where T: Repository<Survey>
+{
+    type Error = T::Error;
+
+    // Insert into underlying persistent storage, then set the survey into redis cache.
+    // Lastly invalidate the cache for aggregate surveys (all surveys).  That gets refreshed
+    // On read rather than on write.
+    fn insert(&mut self, entity: &Survey) -> Result<Option<String>, Self::Error> {
+        let maybe_id = self.repo.insert(entity)?;
+        redis::cmd("SET")
+            .arg(entity.author().to_string())
+            .arg(serde_json::to_string(&SurveyDTO::from(entity)).unwrap())
+            .execute(&mut *self.cache);
+        self.invalidate_surveys_cache(entity.author().to_string());
+        Ok(maybe_id)
+    }
+
+    // passthrough
+    fn get(&mut self, key: &String) -> Result<Option<Survey>, Self::Error> {
+        self.repo.get(key)
+    }
+
+    // passthrough
+    fn get_paged(&mut self, page_num: usize, page_size: usize) -> Result<Option<Vec<Survey>>, Self::Error> {
+        self.repo.get_paged(page_num, page_size)
+    }
+
+    // Update in underlying persistent storage, then update the survey in redis cache.
+    // Lastly invalidate the cache for aggregate surveys (all surveys).  That gets refreshed
+    // On read rather than on write.
+    fn update(&mut self, entity: &Survey) -> Result<Option<String>, Self::Error> {
+        let maybe_id = self.repo.update(entity)?;
+        redis::cmd("SET")
+            .arg(entity.author().to_string())
+            .arg(serde_json::to_string(&SurveyDTO::from(entity)).unwrap())
+            .execute(&mut *self.cache);
+        self.invalidate_surveys_cache(entity.author().to_string());
+        Ok(maybe_id)
+    }
+
+    // Remove from underlying storage and remove survey from redis cache.
+    // Lastly invalidate the cache for aggregate surveys (all surveys).  That gets refreshed
+    // On read rather than on write.
+    fn remove(&mut self, key: &String) -> Result<Option<String>, Self::Error> {
+        let maybe_id = self.repo.remove(key)?;
+        redis::cmd("DEL")
+            .arg(key)
+            .execute(&mut *self.cache);
+        self.invalidate_surveys_cache(key.to_string());
+        Ok(maybe_id)
     }
 }
