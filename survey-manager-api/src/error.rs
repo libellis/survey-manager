@@ -3,6 +3,45 @@ use actix_web::{ResponseError, HttpResponse, http};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::error::BlockingError;
 
+#[derive(Debug)]
+pub enum ApiError {
+    CoreError(CoreError),
+    TokenError(TokenError),
+    ThreadFailure,
+}
+
+impl std::error::Error for ApiError {}
+
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ApiError::CoreError(e) => std::fmt::Display::fmt(e, f),
+            ApiError::TokenError(e) => std::fmt::Display::fmt(e, f),
+            ApiError::ThreadFailure => {
+                write!(f, "Catastrophic thread failure in actix web block.")
+            }
+        }
+    }
+}
+
+impl ResponseError for ApiError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            ApiError::CoreError(e) => e.error_response(),
+            ApiError::TokenError(e) => e.error_response(),
+            ApiError::ThreadFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    }
+
+    fn render_response(&self) -> HttpResponse {
+        match self {
+            ApiError::CoreError(e) => e.render_response(),
+            ApiError::TokenError(e) => e.render_response(),
+            ApiError::ThreadFailure => HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    }
+}
+
 // We create this here because Rust's orphan rules won't let us impl traits in crates/modules
 // where they weren't defined (we can't implement actix error traits inside survey-manager-core
 // so we wrap them and implement it on our owned type here)
@@ -14,13 +53,6 @@ impl std::error::Error for CoreError {}
 impl std::fmt::Display for CoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
-    }
-}
-
-impl CoreError {
-    // Empty for match arms - placeholder for now.  Make an unknown error type.
-    pub fn thread_fail() -> CoreError {
-        CoreError(SMError::UnknownFailure)
     }
 }
 
@@ -52,12 +84,24 @@ impl ResponseError for CoreError {
     }
 }
 
-impl From<BlockingError<SMError>> for CoreError {
+impl From<BlockingError<SMError>> for ApiError {
     fn from(blocking_err: BlockingError<SMError>) -> Self {
         match blocking_err {
-            BlockingError::Error(e) => CoreError(e),
-            _ => CoreError::thread_fail(),
+            BlockingError::Error(e) => ApiError::CoreError(CoreError(e)),
+            _ => ApiError::ThreadFailure,
         }
+    }
+}
+
+impl From<CoreError> for ApiError {
+    fn from(err: CoreError) -> Self {
+        ApiError::CoreError(err)
+    }
+}
+
+impl From<SMError> for ApiError {
+    fn from(err: SMError) -> Self {
+        ApiError::CoreError(CoreError(err))
     }
 }
 
@@ -92,6 +136,14 @@ impl From<&CoreError> for ErrorJson {
     }
 }
 
+impl From<&ApiError> for ErrorJson {
+    fn from(err: &ApiError) -> Self {
+        ErrorJson {
+            error: format!("{}", err)
+        }
+    }
+}
+
 /// Return `BadRequest` for `TokenError` if missing Bearer Token.
 impl ResponseError for TokenError {
     fn error_response(&self) -> HttpResponse {
@@ -116,12 +168,17 @@ impl ResponseError for TokenError {
     }
 }
 
-impl From<BlockingError<TokenError>> for TokenError {
+impl From<BlockingError<TokenError>> for ApiError {
     fn from(blocking_err: BlockingError<TokenError>) -> Self {
         match blocking_err {
-            BlockingError::Error(e) => e,
-            // TODO: Swap with 500 error.
-            BlockingError::Canceled => TokenError::TokenExpired,
+            BlockingError::Error(e) => ApiError::TokenError(e),
+            BlockingError::Canceled => ApiError::ThreadFailure
         }
+    }
+}
+
+impl From<TokenError> for ApiError {
+    fn from(err: TokenError) -> Self {
+        ApiError::TokenError(err)
     }
 }
