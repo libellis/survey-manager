@@ -17,7 +17,7 @@ use crate::errors::Error;
 use crate::errors::Error::ResourceNotFound;
 use crate::dtos::SurveyDTO;
 use std::str::FromStr;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 #[derive(Entity)]
 pub struct Survey {
@@ -109,7 +109,7 @@ impl Survey {
         &self.author.to_string() == author
     }
 
-    pub fn try_update(&mut self, changeset: UpdateSurveyCommand) -> Result<SurveyUpdatedEvent> {
+    pub fn try_update(&mut self, changeset: UpdateSurveyCommand) -> Result<()> {
         if let Some(new_title) = &changeset.title {
             self.change_title(new_title)?;
         }
@@ -119,12 +119,12 @@ impl Survey {
         if let Some(new_desc) = &changeset.description {
             self.change_description(new_desc)?;
         }
-        if let Some(q_changesets) = &changeset.questions {
+        if let Some(q_changesets) = changeset.questions {
             self.try_update_questions(q_changesets)?;
         }
         // got to here so we succeeded and should version up.
         self.version = self.next_version();
-        Ok(self.updated_event(changeset))
+        Ok(())
     }
 
     fn change_title(&mut self, new_title: &String) -> Result<()> {
@@ -142,23 +142,30 @@ impl Survey {
         Ok(())
     }
 
-    fn try_update_questions(&mut self, changesets: &Vec<UpdateQuestionCommand>) -> Result<()> {
+    fn try_update_questions(&mut self, changesets: Vec<PatchQuestion>) -> Result<()> {
         for changeset in changesets {
-            self.try_update_question(changeset)?;
+            if let Some(id) = &changeset.id {
+                // If there is an id, then we update the question at that id.
+                self.try_update_question(id.clone(), changeset)?;
+            } else  {
+                // Else the user wants to add a new question, so we add it.
+                let new_question = Self::create_question(changeset.try_into()?)?;
+                self.questions.push(new_question);
+            }
         }
 
         Ok(())
     }
 
-    fn try_update_question(&mut self, changeset: &UpdateQuestionCommand) -> Result<()> {
+    fn try_update_question(&mut self, id: String, changeset: PatchQuestion) -> Result<()> {
         if let Some(new_title) = &changeset.title {
-            self.change_question_title(&changeset.id, new_title)?;
+            self.change_question_title(&id, new_title)?;
         }
         if let Some(new_type) = &changeset.question_type {
-            self.change_question_type(&changeset.id, new_type)?;
+            self.change_question_type(&id, new_type)?;
         }
-        if let Some(changesets) = &changeset.choices {
-            self.try_update_choices(changesets)?;
+        if let Some(changesets) = changeset.choices {
+            self.try_update_choices(&id, changesets)?;
         }
 
         Ok(())
@@ -184,6 +191,7 @@ impl Survey {
         )
     }
 
+    // TODO: Take in question id to improve efficiency of lookup.  We should always know q_id by this point.
     fn choices_mut(&mut self) -> Vec<&mut Choice> {
         self.questions
             .iter_mut()
@@ -204,23 +212,30 @@ impl Survey {
         Ok(())
     }
 
-    fn try_update_choices(&mut self, changesets: &Vec<UpdateChoiceCommand>) -> Result<()> {
+    fn try_update_choices(&mut self, question_id: &String, changesets: Vec<PatchChoice>) -> Result<()> {
         for changeset in changesets {
-            self.try_update_choice(changeset)?;
+            self.try_update_choice(question_id, changeset)?;
         }
 
         Ok(())
     }
 
-    fn try_update_choice(&mut self, changeset: &UpdateChoiceCommand) -> Result<()> {
-        if let Some(new_title) = &changeset.title {
-            self.change_choice_title(&changeset.id, new_title)?;
-        }
-        if let Some(new_type) = &changeset.content_type {
-            self.change_choice_content_type(&changeset.id, new_type)?;
-        }
-        if let Some(new_content) = &changeset.content {
-            self.change_choice_content(&changeset.id, new_content)?;
+    fn try_update_choice(&mut self, question_id: &String, changeset: PatchChoice) -> Result<()> {
+        if let Some(id) = &changeset.id {
+            if let Some(new_title) = &changeset.title {
+                self.change_choice_title(id, new_title)?;
+            }
+            if let Some(new_type) = &changeset.content_type {
+                self.change_choice_content_type(id, new_type)?;
+            }
+            if let Some(new_content) = &changeset.content {
+                self.change_choice_content(id, new_content)?;
+            }
+        } else {
+            let new_choice = Self::create_choice(changeset.try_into()?)?;
+            if let Some(q) = self.questions.iter_mut().find(|q| &q.id.to_string() == question_id) {
+                q.choices.push(new_choice);
+            }
         }
 
         Ok(())
@@ -259,44 +274,45 @@ impl Survey {
     // the diff.  At the same time we need data from the aggregate itself, like the version number, so
     // we encapsulate this here to discourage misuse, and allow access to both the cmd data, and direct
     // data from Survey object
-
-    fn updated_event(&self, cmd: UpdateSurveyCommand) -> SurveyUpdatedEvent {
-        let questions = if let Some(q) = cmd.questions {
-            Some(q.into_iter()
-                .map(|q| {
-                    QuestionUpdatedEvent {
-                        id: q.id,
-                        question_type: q.question_type,
-                        title: q.title,
-                        choices: if let Some(c) = q.choices {
-                            Some(c.into_iter()
-                                .map(|c| {
-                                    ChoiceUpdatedEvent {
-                                        id: c.id,
-                                        content: c.content,
-                                        content_type: c.content_type,
-                                        title: c.title
-                                    }
-                                }).collect())
-                        } else {
-                            None
-                        }
-                    }
-                }).collect())
-        } else {
-            None
-        };
-        SurveyUpdatedEvent {
-            id: Uuid::new_v4().to_string(),
-            aggregate_id: cmd.id,
-            version: self.version(),
-            occurred: Utc::now().timestamp(),
-            title: cmd.title,
-            description: cmd.description,
-            category: cmd.category,
-            questions,
-        }
-    }
+//    // COMMENTING OUT FOR NOW. THIS IS AN EXAMPLE FOR OTHER BOUNDED CONTEXTS BUT HAS NO USE IN THIS SIMPLE
+//    // CRUD MICROSERVICE
+//    fn updated_event(&self, cmd: UpdateSurveyCommand) -> SurveyUpdatedEvent {
+//        let questions = if let Some(q) = cmd.questions {
+//            Some(q.into_iter()
+//                .map(|q| {
+//                    QuestionUpdatedEvent {
+//                        id: q.id,
+//                        question_type: q.question_type,
+//                        title: q.title,
+//                        choices: if let Some(c) = q.choices {
+//                            Some(c.into_iter()
+//                                .map(|c| {
+//                                    ChoiceUpdatedEvent {
+//                                        id: c.id,
+//                                        content: c.content,
+//                                        content_type: c.content_type,
+//                                        title: c.title
+//                                    }
+//                                }).collect())
+//                        } else {
+//                            None
+//                        }
+//                    }
+//                }).collect())
+//        } else {
+//            None
+//        };
+//        SurveyUpdatedEvent {
+//            id: Uuid::new_v4().to_string(),
+//            aggregate_id: cmd.id,
+//            version: self.version(),
+//            occurred: Utc::now().timestamp(),
+//            title: cmd.title,
+//            description: cmd.description,
+//            category: cmd.category,
+//            questions,
+//        }
+//    }
 }
 
 impl From<SurveyDTO> for Survey {

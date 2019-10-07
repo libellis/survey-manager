@@ -22,6 +22,13 @@ pub enum ValidationError {
     #[snafu(display("Not a valid content type."))]
     ContentTypeValidationError,
 
+    #[snafu(display("Not a valid content."))]
+    ContentValidationError,
+
     #[snafu(display("Not a valid question type."))]
     QuestionTypeValidationError,
+
+    // TODO: Does this really go here?
+    #[snafu(display("Adding a question requires that you supply at least one choice for the question."))]
+    MissingChoicesError,
 }

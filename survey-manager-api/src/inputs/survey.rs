@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand, UpdateQuestionCommand, UpdateChoiceCommand};
+use survey_manager_core::app_services::commands::{CreateSurveyCommand, CreateQuestionCommand, CreateChoiceCommand, UpdateSurveyCommand, PatchQuestion, PatchChoice};
 use std::convert::{Into, TryInto};
 use survey_manager_core::app_services::decode_payload;
 use crate::error::TokenError;
@@ -89,7 +89,7 @@ pub struct UpdateSurveyDTO {
 
 #[derive(Deserialize)]
 pub struct UpdateQuestionDTO {
-    pub id: String,
+    pub id: Option<String>,
     pub question_type: Option<String>,
     pub title: Option<String>,
     pub choices: Option<Vec<UpdateChoiceDTO>>,
@@ -97,7 +97,7 @@ pub struct UpdateQuestionDTO {
 
 #[derive(Deserialize)]
 pub struct UpdateChoiceDTO {
-    pub id: String,
+    pub id: Option<String>,
     pub content: Option<Option<String>>,
     pub content_type: Option<String>,
     pub title: Option<String>,
@@ -131,8 +131,8 @@ impl TryInto<UpdateSurveyCommand> for UpdateSurveyDTO {
     }
 }
 
-impl Into<UpdateQuestionCommand> for UpdateQuestionDTO {
-    fn into(self) -> UpdateQuestionCommand {
+impl Into<PatchQuestion> for UpdateQuestionDTO {
+    fn into(self) -> PatchQuestion {
         let choices = if let Some(c) = self.choices {
             Some(c.into_iter()
                 .map(|c| {
@@ -142,7 +142,7 @@ impl Into<UpdateQuestionCommand> for UpdateQuestionDTO {
             None
         };
 
-        UpdateQuestionCommand {
+        PatchQuestion {
             id: self.id,
             question_type: self.question_type,
             title: self.title,
@@ -151,9 +151,9 @@ impl Into<UpdateQuestionCommand> for UpdateQuestionDTO {
     }
 }
 
-impl Into<UpdateChoiceCommand> for UpdateChoiceDTO {
-    fn into(self) -> UpdateChoiceCommand {
-        UpdateChoiceCommand {
+impl Into<PatchChoice> for UpdateChoiceDTO {
+    fn into(self) -> PatchChoice {
+        PatchChoice {
             id: self.id,
             content: self.content,
             content_type: self.content_type,

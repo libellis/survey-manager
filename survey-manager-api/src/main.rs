@@ -68,7 +68,7 @@ fn remove_survey(
 
             handle_command_async(remove_survey_cmd.into())
                 .from_err()
-                .and_then(move |res| {
+                .and_then(move |_| {
                     // TODO: Replace with json response.
                     Ok(HttpResponse::Ok().body("Deleted"))
                 })
