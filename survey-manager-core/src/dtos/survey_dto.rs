@@ -17,6 +17,7 @@ pub struct ListViewSurveyDTO {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SurveyDTO {
     pub id: String,
     pub version: u64,
@@ -31,12 +32,14 @@ pub struct SurveyDTO {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionDTO {
     pub id: String,
+    #[serde(rename = "type")]
     pub kind: String,
     pub title: String,
     pub choices: Vec<ChoiceDTO>
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ChoiceDTO {
     pub id: String,
     pub content: Option<String>,

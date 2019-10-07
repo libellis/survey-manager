@@ -31,4 +31,8 @@ pub enum ValidationError {
     // TODO: Does this really go here?
     #[snafu(display("Adding a question requires that you supply at least one choice for the question."))]
     MissingChoicesError,
+
+    // TODO: Does this really go here?
+    #[snafu(display("Missing question type."))]
+    MissingQuestionTypeError,
 }

@@ -42,6 +42,7 @@ impl AggregateRoot for Survey {
 }
 
 impl Survey {
+    // TODO: This should probably consume the command.
     pub fn new(
         new_survey: &CreateSurveyCommand,
     ) -> Result<Survey> {

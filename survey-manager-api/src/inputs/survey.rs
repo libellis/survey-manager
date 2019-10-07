@@ -15,6 +15,7 @@ pub struct CreateSurveyDTO {
 
 #[derive(Deserialize)]
 pub struct CreateQuestionDTO {
+    #[serde(rename = "type")]
     pub question_type: String,
     pub title: String,
     pub choices: Vec<CreateChoiceDTO>
@@ -88,14 +89,17 @@ pub struct UpdateSurveyDTO {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateQuestionDTO {
     pub id: Option<String>,
+    #[serde(rename = "type")]
     pub question_type: Option<String>,
     pub title: Option<String>,
     pub choices: Option<Vec<UpdateChoiceDTO>>,
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateChoiceDTO {
     pub id: Option<String>,
     pub content: Option<Option<String>>,

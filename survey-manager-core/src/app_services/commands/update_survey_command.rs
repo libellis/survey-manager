@@ -3,7 +3,7 @@ use domain_patterns::message::Message;
 use crate::app_services::commands::{CreateQuestionCommand, CreateChoiceCommand};
 use std::convert::TryInto;
 use crate::errors::Error;
-use crate::value_objects::ValidationError::{ContentValidationError, ContentTypeValidationError, TitleValidationError, QuestionTypeValidationError, MissingChoicesError};
+use crate::value_objects::ValidationError::{ContentValidationError, ContentTypeValidationError, TitleValidationError, MissingChoicesError, MissingQuestionTypeError};
 
 #[derive(Clone, Command)]
 pub struct UpdateSurveyCommand {
@@ -52,7 +52,7 @@ impl TryInto<CreateQuestionCommand> for PatchQuestion {
 
         Ok(
             CreateQuestionCommand {
-                question_type: self.question_type.ok_or(QuestionTypeValidationError)?,
+                question_type: self.question_type.ok_or(MissingQuestionTypeError)?,
                 title: self.title.ok_or(TitleValidationError { msg: "Missing title for new question, or trying to update question without supplying it's id.".to_string() })?,
                 choices,
             }
